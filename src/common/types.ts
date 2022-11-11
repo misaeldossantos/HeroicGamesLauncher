@@ -615,3 +615,9 @@ export interface ToolArgs {
 }
 
 export type StatusPromise = Promise<{ status: 'done' | 'error' }>
+
+export interface WineManagerUISettings {
+  showWineGe: boolean
+  showWineLutris: boolean
+  showProtonGe: boolean
+}

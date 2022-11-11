@@ -7,21 +7,16 @@ import React, { lazy, useContext, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Tab, Tabs } from '@mui/material'
 import { Type } from 'heroic-wine-downloader'
-import { StoreIpc } from 'frontend/helpers/electronStores'
+import { TypeCheckedStoreFrontend } from 'frontend/helpers/electronStores'
+import { WineManagerUISettings } from 'common/types'
 
 const WineItem = lazy(
   async () => import('frontend/screens/WineManager/components/WineItem')
 )
 
-const configStore = new StoreIpc('wineManagerConfigStore', {
+const configStore = new TypeCheckedStoreFrontend('wineManagerConfigStore', {
   cwd: 'store'
 })
-
-interface WineManagerUISettings {
-  showWineGe: boolean
-  showWineLutris: boolean
-  showProtonGe: boolean
-}
 
 export default function WineManager(): JSX.Element | null {
   const { t } = useTranslation()

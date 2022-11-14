@@ -11,17 +11,11 @@ type Props = {
   game: string
 }
 
-type TimeStamp = {
-  firstPlayed: Date
-  lastPlayed: Date
-  totalPlayed: number
-}
-
 function TimeContainer({ game }: Props) {
   const { t } = useTranslation('gamepage')
-  const hasPlayed = timestampStore.has(game)
+  const tsInfo = timestampStore.get_nodefault(game)
 
-  if (!hasPlayed) {
+  if (!tsInfo) {
     return (
       <SmallInfo
         title={`${t('game.lastPlayed', 'Last Played')}:`}
@@ -30,7 +24,6 @@ function TimeContainer({ game }: Props) {
     )
   }
 
-  const tsInfo = timestampStore.get(game) as TimeStamp
   const options: Intl.DateTimeFormatOptions = {
     year: 'numeric',
     month: 'numeric',

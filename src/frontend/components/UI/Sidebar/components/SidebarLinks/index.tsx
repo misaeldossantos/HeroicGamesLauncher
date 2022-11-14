@@ -19,7 +19,7 @@ import { faDiscord, faPatreon } from '@fortawesome/free-brands-svg-icons'
 import { openDiscordLink, getGameInfo } from 'frontend/helpers'
 
 import ContextProvider from 'frontend/state/ContextProvider'
-import { Runner, GameInfo } from 'common/types'
+import { Runner, GameInfo, SideloadGame } from 'common/types'
 import './index.css'
 import QuitButton from '../QuitButton'
 import { LocationState } from 'frontend/types'
@@ -33,7 +33,9 @@ type PathSplit = [
 ]
 
 export default function SidebarLinks() {
-  const [gameInfo, setGameInfo] = useState<Partial<GameInfo>>({
+  const [gameInfo, setGameInfo] = useState<
+    Partial<GameInfo> | Partial<SideloadGame>
+  >({
     cloud_save_enabled: false,
     is_installed: false
   })
@@ -188,7 +190,8 @@ export default function SidebarLinks() {
           state={{
             fromGameCard: false,
             runner: runner,
-            hasCloudSave: gameInfo?.cloud_save_enabled
+            hasCloudSave:
+              'cloud_save_enabled' in gameInfo && gameInfo.cloud_save_enabled
           }}
         >
           <>
@@ -245,19 +248,21 @@ export default function SidebarLinks() {
                 </span>
               )}
             </NavLink>
-            {gameInfo.cloud_save_enabled && !isLinuxGame && (
-              <NavLink
-                role="link"
-                data-testid="linkSync"
-                to={`/settings/${runner}/${appName}/sync`}
-                state={{ ...state, runner: state?.runner }}
-                className={classNames('Sidebar__item SidebarLinks__subItem', {
-                  ['active']: type === 'sync'
-                })}
-              >
-                <span>{t('settings.navbar.sync')}</span>
-              </NavLink>
-            )}
+            {'cloud_save_enabled' in gameInfo &&
+              gameInfo.cloud_save_enabled &&
+              !isLinuxGame && (
+                <NavLink
+                  role="link"
+                  data-testid="linkSync"
+                  to={`/settings/${runner}/${appName}/sync`}
+                  state={{ ...state, runner: state?.runner }}
+                  className={classNames('Sidebar__item SidebarLinks__subItem', {
+                    ['active']: type === 'sync'
+                  })}
+                >
+                  <span>{t('settings.navbar.sync')}</span>
+                </NavLink>
+              )}
             {isDefaultSetting && (
               <NavLink
                 role="link"

@@ -283,7 +283,7 @@ export default function DownloadDialog({
         setIsMacNative(gameInfo.is_mac_native && isMac)
       } else {
         const gameData = await getGameInfo(appName, runner)
-        if (!gameData) {
+        if (!gameData || gameData.runner === 'sideload') {
           return
         }
         setIsLinuxNative(gameData.is_linux_native && isLinux)

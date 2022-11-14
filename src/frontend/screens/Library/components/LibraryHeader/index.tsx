@@ -3,14 +3,14 @@ import { useTranslation } from 'react-i18next'
 import ActionIcons from 'frontend/components/UI/ActionIcons'
 import { epicCategories } from 'frontend/helpers/library'
 import ContextProvider from 'frontend/state/ContextProvider'
-import { GameInfo } from 'common/types'
+import { GameInfo, SideloadGame } from 'common/types'
 import { getLibraryTitle } from '../../constants'
 import './index.css'
 
 const storage = window.localStorage
 
 type Props = {
-  list: GameInfo[]
+  list: (GameInfo | SideloadGame)[]
   sortDescending: boolean
   sortInstalled: boolean
   setSortInstalled: (value: boolean) => void
@@ -35,7 +35,8 @@ export default function LibraryHeader({
     }
     const dlcCount =
       category === 'legendary'
-        ? list.filter((lib) => lib.install.is_dlc).length
+        ? list.filter((lib) => lib.runner !== 'sideload' && lib.install.is_dlc)
+            .length
         : 0
 
     const total = list.length - dlcCount

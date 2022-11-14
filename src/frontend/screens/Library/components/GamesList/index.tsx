@@ -1,12 +1,12 @@
 import React, { useContext } from 'react'
-import { GameInfo, Runner } from 'common/types'
+import { GameInfo, Runner, SideloadGame } from 'common/types'
 import cx from 'classnames'
 import GameCard from '../GameCard'
 import ContextProvider from 'frontend/state/ContextProvider'
 import { useTranslation } from 'react-i18next'
 
 interface Props {
-  library: GameInfo[]
+  library: (GameInfo | SideloadGame)[]
   layout?: string
   isFirstLane?: boolean
   handleGameCardClick: (
@@ -52,13 +52,25 @@ export const GamesList = ({
             title,
             art_square,
             art_cover,
-            art_logo,
             app_name,
             is_installed,
             runner,
-            cloud_save_enabled,
-            install: { version, install_size, is_dlc, platform }
+            install: { platform }
           } = gameInfo
+
+          let is_dlc = false
+          let install_size: string | undefined
+          let version: string | undefined
+          let art_logo: string | undefined
+          let cloud_save_enabled = false
+          if (gameInfo.runner !== 'sideload') {
+            is_dlc = gameInfo.install.is_dlc ?? false
+            install_size = gameInfo.install.install_size
+            version = gameInfo.install.version
+            art_logo = gameInfo.art_logo
+            cloud_save_enabled = gameInfo.cloud_save_enabled
+          }
+
           if (is_dlc) {
             return null
           }
@@ -73,7 +85,6 @@ export const GamesList = ({
               runner={runner}
               cover={art_square}
               coverList={art_cover}
-              // @ts-expect-error TODO: Verify `art_logo` is not undefined here
               logo={art_logo}
               hasCloudSave={cloud_save_enabled}
               title={title}
@@ -82,9 +93,10 @@ export const GamesList = ({
               version={`${version}`}
               size={`${install_size}`}
               hasUpdate={hasUpdate}
-              buttonClick={() =>
-                handleGameCardClick(app_name, runner, gameInfo)
-              }
+              buttonClick={() => {
+                if (gameInfo.runner !== 'sideload')
+                  handleGameCardClick(app_name, runner, gameInfo)
+              }}
               forceCard={layout === 'grid'}
               installedPlatform={platform}
               isRecent={isRecent}

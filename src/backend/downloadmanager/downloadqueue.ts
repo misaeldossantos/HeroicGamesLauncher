@@ -17,22 +17,15 @@ type DownloadManagerState = 'idle' | 'running'
 let queueState: DownloadManagerState = 'idle'
 
 function getFirstQueueElement() {
-  if (downloadManager.has('queue')) {
-    const elements = downloadManager.get('queue') as DMQueueElement[]
-    return elements.at(0)
-  }
-
-  return null
+  const elements = downloadManager.get('queue', [])
+  return elements.at(0) ?? null
 }
 
 function addToFinished(
   element: DMQueueElement,
   status: 'done' | 'error' | 'abort'
 ) {
-  let elements: DMQueueElement[] = []
-  if (downloadManager.has('finished')) {
-    elements = downloadManager.get('finished') as DMQueueElement[]
-  }
+  const elements = downloadManager.get('finished', [])
 
   const elementIndex = elements.findIndex(
     (el) => el.params.appName === element.params.appName
@@ -77,10 +70,7 @@ function addToQueue(element: DMQueueElement) {
     return
   }
 
-  let elements: DMQueueElement[] = []
-  if (downloadManager.has('queue')) {
-    elements = downloadManager.get('queue') as DMQueueElement[]
-  }
+  const elements = downloadManager.get('queue', [])
 
   const elementIndex = elements.findIndex(
     (el) => el.params.appName === element.params.appName
@@ -106,8 +96,7 @@ function addToQueue(element: DMQueueElement) {
 
 function removeFromQueue(appName: string) {
   if (appName && downloadManager.has('queue')) {
-    let elements: DMQueueElement[] = []
-    elements = downloadManager.get('queue') as DMQueueElement[]
+    const elements = downloadManager.get('queue', [])
     const index = elements.findIndex(
       (queueElement) => queueElement?.params.appName === appName
     )
@@ -132,12 +121,8 @@ function clearFinished() {
 }
 
 function getQueueInformation() {
-  let elements: DMQueueElement[] = []
-  let finished: DMQueueElement[] = []
-  if (downloadManager.has('queue')) {
-    elements = downloadManager.get('queue') as DMQueueElement[]
-    finished = downloadManager.get('finished') as DMQueueElement[]
-  }
+  const elements = downloadManager.get('queue', [])
+  const finished = downloadManager.get('finished', [])
 
   return { elements, finished }
 }

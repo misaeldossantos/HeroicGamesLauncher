@@ -1,7 +1,6 @@
 import {
   InstallPlatform,
   AppSettings,
-  GameInfo,
   GameStatus,
   InstallProgress,
   Runner
@@ -50,11 +49,11 @@ async function install({
     return
   }
 
-  const { folder_name, is_installed }: GameInfo = (await getGameInfo(
-    appName,
-    runner
-  ))!
+  const { folder_name, is_installed } = (await getGameInfo(appName, runner))!
   if (isInstalling) {
+    // NOTE: This can't really happen, since `folder_name` can only be undefined if we got a
+    //       SideloadGame from getGameInfo, but we can't "install" sideloaded games
+    if (!folder_name) return
     return handleStopInstallation(
       appName,
       [installPath, folder_name],

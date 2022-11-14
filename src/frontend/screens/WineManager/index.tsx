@@ -36,12 +36,12 @@ export default function WineManager(): JSX.Element | null {
   useEffect(() => {
     const hasSettings = configStore.has('wine-manager-settings')
     if (hasSettings) {
-      const oldWineManagerSettings = configStore.get(
-        'wine-manager-settings'
-      ) as WineManagerUISettings
-      if (wineManagerSettings) {
-        setWineManagerSettings(oldWineManagerSettings)
-      }
+      const oldWineManagerSettings = configStore.get('wine-manager-settings', {
+        showWineGe: true,
+        showWineLutris: true,
+        showProtonGe: true
+      })
+      setWineManagerSettings(oldWineManagerSettings)
     }
 
     refreshWineVersionInfo(true)

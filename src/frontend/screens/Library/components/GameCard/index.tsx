@@ -40,7 +40,7 @@ interface Card {
   hasUpdate: boolean
   hasCloudSave: boolean
   isInstalled: boolean
-  logo: string
+  logo: string | undefined
   size: string
   title: string
   version: string

@@ -3,11 +3,12 @@ import { unlink, writeFile } from 'graceful-fs'
 import { logError, logInfo, LogPrefix } from '../../logger/logger'
 import { GlobalConfig } from '../../config'
 import { removeSpecialcharacters } from '../../utils'
-import { GameInfo } from 'common/types'
+import { GameInfo, SideloadGame } from 'common/types'
 import { userHome } from '../../constants'
 import { GOGLibrary } from '../../gog/library'
 import { getIcon } from '../utils'
 import { addNonSteamGame } from '../nonesteamgame/nonesteamgame'
+import { join } from 'path'
 
 /**
  * Adds a desktop shortcut to $HOME/Desktop and to /usr/share/applications
@@ -16,7 +17,10 @@ import { addNonSteamGame } from '../nonesteamgame/nonesteamgame'
  * @async
  * @public
  */
-async function addShortcuts(gameInfo: GameInfo, fromMenu?: boolean) {
+async function addShortcuts(
+  gameInfo: GameInfo | SideloadGame,
+  fromMenu?: boolean
+) {
   if (process.platform === 'darwin') {
     return
   }
@@ -63,16 +67,25 @@ Categories=Game;
       break
     }
     case 'win32': {
+      const shortcutOptions: Electron.ShortcutDetails = {
+        target: launchWithProtocol
+      }
       let executable = gameInfo.install.executable
       if (gameInfo.runner === 'gog') {
         executable = GOGLibrary.get().getExecutable(gameInfo.app_name)
       }
-      const icon = `${gameInfo.install.install_path}\\${executable}`
-
-      const shortcutOptions = {
-        target: launchWithProtocol,
-        icon,
-        iconIndex: 0
+      if (executable) {
+        let icon: string
+        if (
+          'install_path' in gameInfo.install &&
+          gameInfo.install.install_path
+        ) {
+          icon = join(gameInfo.install.install_path, executable)
+        } else {
+          icon = executable
+        }
+        shortcutOptions.icon = icon
+        shortcutOptions.iconIndex = 0
       }
 
       if (addDesktopShortcuts || fromMenu) {
@@ -96,7 +109,7 @@ Categories=Game;
  * @async
  * @public
  */
-async function removeShortcuts(gameInfo: GameInfo) {
+async function removeShortcuts(gameInfo: GameInfo | SideloadGame) {
   const [desktopFile, menuFile] = shortcutFiles(gameInfo.title)
 
   if (desktopFile) {

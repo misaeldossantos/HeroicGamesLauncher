@@ -23,7 +23,8 @@ import {
   GameInfo,
   GameStatus,
   HiddenGame,
-  Runner
+  Runner,
+  SideloadGame
 } from 'common/types'
 import ErrorComponent from 'frontend/components/UI/ErrorComponent'
 import LibraryHeader from './components/LibraryHeader'
@@ -71,7 +72,7 @@ export default function Library(): JSX.Element {
   const [showModal, setShowModal] = useState<ModalState>({
     game: '',
     show: false,
-    runner: 'legendary' as Runner,
+    runner: 'legendary',
     gameInfo: null
   })
   const [sortDescending, setSortDescending] = useState(
@@ -151,7 +152,10 @@ export default function Library(): JSX.Element {
     }
   }, [epic.username, gog.username])
 
-  const filterByPlatform = (library: GameInfo[], filter: string) => {
+  const filterByPlatform = (
+    library: (GameInfo | SideloadGame)[],
+    filter: string
+  ) => {
     if (!library) {
       return []
     }
@@ -195,19 +199,19 @@ export default function Library(): JSX.Element {
   const showFavourites =
     libraryTopSection === 'favourites' && !!favouriteGames.list.length
 
-  const favourites: GameInfo[] = useMemo(() => {
-    const tempArray: GameInfo[] = []
+  const favourites = useMemo(() => {
+    const tempArray: (GameInfo | SideloadGame)[] = []
     if (showFavourites || showFavouritesLibrary) {
       const favouriteAppNames = favouriteGames.list.map(
         (favourite: FavouriteGame) => favourite.appName
       )
-      epic.library.forEach((game: GameInfo) => {
+      epic.library.forEach((game) => {
         if (favouriteAppNames.includes(game.app_name)) tempArray.push(game)
       })
-      gog.library.forEach((game: GameInfo) => {
+      gog.library.forEach((game) => {
         if (favouriteAppNames.includes(game.app_name)) tempArray.push(game)
       })
-      sideloadedLibrary.forEach((game: GameInfo) => {
+      sideloadedLibrary.forEach((game) => {
         if (favouriteAppNames.includes(game.app_name)) tempArray.push(game)
       })
     }
@@ -216,7 +220,7 @@ export default function Library(): JSX.Element {
 
   // select library
   const libraryToShow = useMemo(() => {
-    let library: Array<GameInfo> = []
+    let library: Array<GameInfo | SideloadGame> = []
     if (showFavouritesLibrary) {
       library = [...favourites].filter((g) =>
         category === 'all' ? g : g.runner === category

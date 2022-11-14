@@ -113,7 +113,7 @@ export interface ExtraInfo {
 
 export type GameConfigVersion = 'auto' | 'v0' | 'v0.1'
 export interface GameInfo {
-  runner: Runner
+  runner: 'legendary' | 'gog'
   store_url: string
   app_name: string
   art_cover: string
@@ -209,7 +209,7 @@ export interface InstalledInfo {
   buildId?: string // For verifing GOG games
 }
 
-interface Reqs {
+export interface Reqs {
   minimum: string
   recommended: string
   title: string
@@ -254,25 +254,26 @@ export interface GOGLoginData {
 }
 
 export interface GOGGameInfo {
+  isGalaxyCompatible: true
   tags: string[]
   id: number
-  image: string
   availability: {
     isAvailable: boolean
-    isAvailableInAccount: boolean
+    isAvailableInAccount: true
   }
   title: string
+  image: string
   url: string
   worksOn: {
-    Windows: boolean
-    Mac: boolean
-    Linux: boolean
+    [key in 'Windows' | 'Mac' | 'Linux']: boolean
   }
   category: string
   rating: number
-  isComingSoom: boolean
-  isGame: boolean
+  isComingSoon: boolean
+  isMovie: false
+  isGame: true
   slug: string
+  updates: number
   isNew: boolean
   dlcCount: number
   releaseDate: {
@@ -283,8 +284,7 @@ export interface GOGGameInfo {
   isBaseProductMissing: boolean
   isHidingDisabled: boolean
   isInDevelopment: boolean
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  extraInfo: any[]
+  extraInfo: unknown[]
   isHidden: boolean
 }
 
@@ -437,10 +437,12 @@ export interface Runtime {
 
 export type RuntimeName = 'eac_runtime' | 'battleye_runtime'
 
-export interface HiddenGame {
+export type RecentGame = {
   appName: string
   title: string
 }
+
+export type HiddenGame = RecentGame
 
 export type FavouriteGame = HiddenGame
 
@@ -532,11 +534,6 @@ export interface Tools {
   runner: Runner
 }
 
-export type RecentGame = {
-  appName: string
-  title: string
-}
-
 export interface DMQueueElement {
   params: InstallParams
   status?: 'done' | 'error' | 'abort'
@@ -554,11 +551,11 @@ export type WineCommandArgs = {
 }
 
 export interface SideloadGame {
-  runner: Runner
+  runner: 'sideload'
   app_name: string
   art_cover: string
   art_square: string
-  is_installed: boolean
+  is_installed: true
   title: string
   install: {
     executable: string

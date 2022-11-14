@@ -1,7 +1,7 @@
 import short from 'short-uuid'
 import { faFolderOpen } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { GameInfo, InstallPlatform, WineInstallation } from 'common/types'
+import { InstallPlatform, SideloadGame, WineInstallation } from 'common/types'
 import {
   CachedImage,
   TextInputField,
@@ -49,7 +49,7 @@ export default function SideloadDialog({
   const [imageUrl, setImageUrl] = useState('')
   const [app_name, setApp_name] = useState(appName ?? '')
   const [runningSetup, setRunningSetup] = useState(false)
-  const [gameInfo, setGameInfo] = useState<Partial<GameInfo>>({})
+  const [gameInfo, setGameInfo] = useState<Partial<SideloadGame>>({})
   const editMode = Boolean(appName)
 
   const { refreshLibrary } = useContext(ContextProvider)
@@ -62,7 +62,7 @@ export default function SideloadDialog({
   useEffect(() => {
     if (appName) {
       getGameInfo(appName, 'sideload').then((info) => {
-        if (!info) {
+        if (!info || info.runner !== 'sideload') {
           return
         }
         setGameInfo(info)

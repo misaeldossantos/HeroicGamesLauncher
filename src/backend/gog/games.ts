@@ -309,8 +309,7 @@ class GOGGame extends Game {
       versionEtag: isLinuxNative ? '' : installInfo.manifest.versionEtag,
       buildId: isLinuxNative ? '' : installInfo.game.buildId
     }
-    const array: Array<InstalledInfo> =
-      (installedGamesStore.get('installed', []) as Array<InstalledInfo>) || []
+    const array = installedGamesStore.get('installed', [])
     array.push(installedData)
     installedGamesStore.set('installed', array)
     GOGLibrary.get().refreshInstalled()
@@ -608,7 +607,7 @@ class GOGGame extends Game {
         '--os',
         gameInfo.install.platform,
         '--ts',
-        syncStore.get([this.appName, location.name].join('.'), '0') as string,
+        syncStore.get(`${this.appName}.${location.name}`, '0'),
         '--name',
         location.name,
         arg
@@ -634,18 +633,14 @@ class GOGGame extends Game {
         )
       }
       if (res.stdout) {
-        syncStore.set(
-          [this.appName, location.name].join('.'),
-          res.stdout.trim()
-        )
+        syncStore.set(`${this.appName}.${location.name}`, res.stdout.trim())
       }
     }
 
     return fullOutput
   }
   public async uninstall(): Promise<ExecResult> {
-    const array: Array<InstalledInfo> =
-      (installedGamesStore.get('installed') as Array<InstalledInfo>) || []
+    const array = installedGamesStore.get('installed', [])
     const index = array.findIndex((game) => game.appName === this.appName)
     if (index === -1) {
       throw Error("Game isn't installed")
@@ -755,9 +750,7 @@ class GOGGame extends Game {
       return { status: 'error' }
     }
 
-    const installedArray = installedGamesStore.get(
-      'installed'
-    ) as InstalledInfo[]
+    const installedArray = installedGamesStore.get('installed', [])
     const gameIndex = installedArray.findIndex(
       (value) => this.appName === value.appName
     )
@@ -835,10 +828,7 @@ class GOGGame extends Game {
   }
 
   async forceUninstall(): Promise<void> {
-    const installed = installedGamesStore.get(
-      'installed',
-      []
-    ) as Array<InstalledInfo>
+    const installed = installedGamesStore.get('installed', [])
     const newInstalled = installed.filter((g) => g.appName !== this.appName)
     installedGamesStore.set('installed', newInstalled)
     const mainWindow =

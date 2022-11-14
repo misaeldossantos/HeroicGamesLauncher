@@ -19,7 +19,13 @@ import { useTranslation } from 'react-i18next'
 import ContextProvider from 'frontend/state/ContextProvider'
 import { UpdateComponent, SelectField } from 'frontend/components/UI'
 
-import { GameInfo, GameStatus, Runner } from 'common/types'
+import {
+  ExtraInfo,
+  GameInfo,
+  GameStatus,
+  Runner,
+  SideloadGame
+} from 'common/types'
 import { LegendaryInstallInfo } from 'common/types/legendary'
 import { GogInstallInfo, GOGCloudSavesLocation } from 'common/types/gog'
 
@@ -69,7 +75,7 @@ export default function GamePage(): JSX.Element | null {
 
   const [progress, previousProgress] = hasProgress(appName)
   // @ts-expect-error TODO: Proper default value
-  const [gameInfo, setGameInfo] = useState<GameInfo>({})
+  const [gameInfo, setGameInfo] = useState<GameInfo | SideloadGame>({})
   const [updateRequested, setUpdateRequested] = useState(false)
   const [autoSyncSaves, setAutoSyncSaves] = useState(false)
   const [savesPath, setSavesPath] = useState('')
@@ -113,16 +119,16 @@ export default function GamePage(): JSX.Element | null {
           return
         }
         setGameInfo(newInfo)
-        const { install, is_linux_native, is_mac_native } = newInfo
 
-        const installPlatform =
-          install.platform || (is_linux_native && isLinux)
-            ? 'linux'
-            : is_mac_native && isMac
-            ? 'Mac'
-            : 'Windows'
+        if (runner !== 'sideload' && newInfo.runner !== 'sideload') {
+          const { install, is_linux_native, is_mac_native } = newInfo
 
-        if (runner !== 'sideload') {
+          const installPlatform =
+            install.platform || (is_linux_native && isLinux)
+              ? 'linux'
+              : is_mac_native && isMac
+              ? 'Mac'
+              : 'Windows'
           getInstallInfo(appName, runner, installPlatform)
             .then((info) => {
               if (!info) {
@@ -157,7 +163,7 @@ export default function GamePage(): JSX.Element | null {
             setWinePrefix(winePrefix)
           }
 
-          if (newInfo?.cloud_save_enabled) {
+          if ('cloud_save_enabled' in newInfo && newInfo.cloud_save_enabled) {
             setAutoSyncSaves(autoSyncSaves)
             setGOGSaves(gogSaves ?? [])
             return setSavesPath(savesPath)
@@ -197,21 +203,30 @@ export default function GamePage(): JSX.Element | null {
       runner,
       title,
       art_square,
-      install: {
-        install_path,
-        install_size,
-        version,
-        platform: installPlatform
-      },
+      install: { platform: installPlatform },
       is_installed,
-      extra,
-      developer,
-      cloud_save_enabled,
       canRunOffline,
       folder_name
-    }: GameInfo = gameInfo
+    } = gameInfo
 
-    hasRequirements = extra?.reqs?.length > 0
+    // TODO: Do this in a *somewhat* prettier way
+    let install_path: string | undefined
+    let install_size: string | undefined
+    let version: string | undefined
+    let extra: ExtraInfo | undefined
+    let developer: string | undefined
+    let cloud_save_enabled = false
+
+    if (gameInfo.runner !== 'sideload') {
+      install_path = gameInfo.install.install_path
+      install_size = gameInfo.install.install_size
+      version = gameInfo.install.version
+      extra = gameInfo.extra
+      developer = gameInfo.developer
+      cloud_save_enabled = gameInfo.cloud_save_enabled
+    }
+
+    hasRequirements = extra?.reqs ? extra.reqs.length > 0 : false
     hasUpdate = is_installed && gameUpdates?.includes(appName)
     const appLocation = install_path || folder_name
 
@@ -252,7 +267,7 @@ export default function GamePage(): JSX.Element | null {
 
     return (
       <div className="gameConfigContainer">
-        {showModal.show && (
+        {gameInfo.runner !== 'sideload' && showModal.show && (
           <InstallModal
             appName={showModal.game}
             runner={runner}
@@ -285,7 +300,7 @@ export default function GamePage(): JSX.Element | null {
                     appName={appName}
                     isInstalled={is_installed}
                     title={title}
-                    storeUrl={gameInfo.store_url}
+                    storeUrl={'store_url' in gameInfo ? gameInfo.store_url : ''}
                     runner={gameInfo.runner}
                     handleUpdate={handleUpdate}
                     disableUpdate={updateRequested || isUpdating}
@@ -510,7 +525,7 @@ export default function GamePage(): JSX.Element | null {
                   <div>{t('game.requirements', 'Requirements')}</div>
                 </DialogHeader>
                 <DialogContent>
-                  <GameRequirements gameInfo={gameInfo} />
+                  <GameRequirements reqs={extra?.reqs} />
                 </DialogContent>
               </Dialog>
             )}

@@ -10,9 +10,9 @@ import {
   RefreshOptions,
   Runner,
   WineVersionInfo,
-  UserInfo,
   InstallParams,
-  LibraryTopSectionOptions
+  LibraryTopSectionOptions,
+  SideloadGame
 } from 'common/types'
 import { Category, DialogModalOptions } from 'frontend/types'
 import { TFunction, withTranslation } from 'react-i18next'
@@ -53,11 +53,11 @@ interface StateProps {
   category: Category
   epic: {
     library: GameInfo[]
-    username: string | null
+    username?: string
   }
   gog: {
     library: GameInfo[]
-    username: string | null
+    username?: string
   }
   wineVersions: WineVersionInfo[]
   error: boolean
@@ -84,14 +84,13 @@ interface StateProps {
   activeController: string
   connectivity: { status: ConnectivityStatus; retryIn: number }
   dialogModalOptions: DialogModalOptions
-  sideloadedLibrary: GameInfo[]
+  sideloadedLibrary: SideloadGame[]
 }
 
 export class GlobalState extends PureComponent<Props> {
   loadGOGLibrary = (): Array<GameInfo> => {
-    const games = gogLibraryStore.has('games')
-      ? (gogLibraryStore.get('games', []) as GameInfo[])
-      : []
+    const games = gogLibraryStore.get('games', [])
+
     const installedGames =
       (gogInstalledGamesStore.get('installed', []) as Array<InstalledInfo>) ||
       []
@@ -109,20 +108,14 @@ export class GlobalState extends PureComponent<Props> {
   state: StateProps = {
     category: (storage.getItem('category') as Category) || 'legendary',
     epic: {
-      library: libraryStore.has('library')
-        ? (libraryStore.get('library', []) as GameInfo[])
-        : [],
-      username:
-        (configStore.get('userInfo', null) as UserInfo)?.displayName || null
+      library: libraryStore.get('library', []),
+      username: configStore.get_nodefault('userInfo.displayName')
     },
     gog: {
       library: this.loadGOGLibrary(),
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      username: (gogConfigStore.get('userData', null) as any)?.username || null
+      username: gogConfigStore.get_nodefault('userData.username')
     },
-    wineVersions: wineDownloaderInfoStore.has('wine-releases')
-      ? (wineDownloaderInfoStore.get('wine-releases', []) as WineVersionInfo[])
-      : [],
+    wineVersions: wineDownloaderInfoStore.get('wine-releases', []),
     error: false,
     filterText: '',
     filterPlatform: 'all',
@@ -135,33 +128,29 @@ export class GlobalState extends PureComponent<Props> {
     platform: 'unknown',
     refreshing: false,
     refreshingInTheBackground: true,
-    hiddenGames:
-      (configStore.get('games.hidden', []) as Array<HiddenGame>) || [],
+    hiddenGames: configStore.get('games.hidden', []),
     showHidden: JSON.parse(storage.getItem('show_hidden') || 'false'),
     showFavourites: JSON.parse(storage.getItem('show_favorites') || 'false'),
     sidebarCollapsed: JSON.parse(
       storage.getItem('sidebar_collapsed') || 'false'
     ),
-    favouriteGames:
-      (configStore.get('games.favourites', []) as Array<FavouriteGame>) || [],
-    theme: (configStore.get('theme', '') as string) || '',
-    zoomPercent: parseInt(
-      (configStore.get('zoomPercent', '100') as string) || '100'
-    ),
+    favouriteGames: configStore.get('games.favourites', []),
+    theme: configStore.get('theme', ''),
+    zoomPercent: configStore.get('zoomPercent', 100),
     secondaryFontFamily:
-      (configStore.get('contentFontFamily') as string) ||
+      configStore.get_nodefault('contentFontFamily') ||
       getComputedStyle(document.documentElement).getPropertyValue(
         '--default-secondary-font-family'
       ),
     primaryFontFamily:
-      (configStore.get('actionsFontFamily') as string) ||
+      configStore.get_nodefault('actionsFontFamily') ||
       getComputedStyle(document.documentElement).getPropertyValue(
         '--default-primary-font-family'
       ),
-    allTilesInColor: (configStore.get('allTilesInColor') as boolean) || false,
+    allTilesInColor: configStore.get('allTilesInColor', false),
     activeController: '',
     connectivity: { status: 'offline', retryIn: 0 },
-    sideloadedLibrary: sideloadLibrary.get('games', []) as GameInfo[],
+    sideloadedLibrary: sideloadLibrary.get('games', []),
     dialogModalOptions: { showDialog: false }
   }
 
@@ -393,7 +382,7 @@ export class GlobalState extends PureComponent<Props> {
       }
     }
 
-    const updatedSideload = sideloadLibrary.get('games', []) as GameInfo[]
+    const updatedSideload = sideloadLibrary.get('games', [])
 
     this.setState({
       epic: {
@@ -617,8 +606,8 @@ export class GlobalState extends PureComponent<Props> {
       })
     })
 
-    const legendaryUser = Boolean(configStore.get('userInfo', null))
-    const gogUser = Boolean(gogConfigStore.get('userData', null))
+    const legendaryUser = configStore.has('userInfo')
+    const gogUser = gogConfigStore.has('userData')
     const platform = await getPlatform()
 
     if (legendaryUser) {

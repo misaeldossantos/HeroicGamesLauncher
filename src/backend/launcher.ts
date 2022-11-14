@@ -43,7 +43,8 @@ import {
   LaunchPreperationResult,
   RpcClient,
   WineInstallation,
-  WineCommandArgs
+  WineCommandArgs,
+  SideloadGame
 } from 'common/types'
 import { spawn } from 'child_process'
 import shlex from 'shlex'
@@ -52,7 +53,7 @@ import { showDialogBoxModalAuto } from './dialog/dialog'
 
 async function prepareLaunch(
   gameSettings: GameSettings,
-  gameInfo: GameInfo,
+  gameInfo: GameInfo | SideloadGame,
   isNative: boolean
 ): Promise<LaunchPreperationResult> {
   const globalSettings = await GlobalConfig.get().getSettings()

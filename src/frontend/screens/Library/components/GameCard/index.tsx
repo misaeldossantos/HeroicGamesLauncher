@@ -6,7 +6,13 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faRepeat } from '@fortawesome/free-solid-svg-icons'
 
 import { ReactComponent as DownIcon } from 'frontend/assets/down-icon.svg'
-import { FavouriteGame, GameStatus, HiddenGame, Runner } from 'common/types'
+import {
+  FavouriteGame,
+  GameInfo,
+  HiddenGame,
+  Runner,
+  SideloadGame
+} from 'common/types'
 import { Link, useNavigate } from 'react-router-dom'
 import { ReactComponent as PlayIcon } from 'frontend/assets/play-icon.svg'
 import { ReactComponent as SettingsIcon } from 'frontend/assets/settings-sharp.svg'
@@ -33,39 +39,37 @@ import StoreLogos from 'frontend/components/UI/StoreLogos'
 import UninstallModal from 'frontend/components/UI/UninstallModal'
 
 interface Card {
-  appName: string
   buttonClick: () => void
-  cover: string
-  coverList: string
   hasUpdate: boolean
-  hasCloudSave: boolean
-  isInstalled: boolean
-  logo: string | undefined
-  size: string
-  title: string
-  version: string
-  runner: Runner
-  installedPlatform: string | undefined
   forceCard?: boolean
   isRecent: boolean
+  gameInfo: GameInfo | SideloadGame
 }
 
 const GameCard = ({
-  cover,
-  title,
-  appName,
-  isInstalled,
-  logo,
-  coverList,
-  size = '',
   hasUpdate,
-  hasCloudSave,
   buttonClick,
   forceCard,
-  runner,
-  installedPlatform,
-  isRecent = false
+  isRecent = false,
+  gameInfo
 }: Card) => {
+  const {
+    title,
+    art_square: cover,
+    app_name: appName,
+    is_installed: isInstalled,
+    runner,
+    install: { platform: installedPlatform }
+  } = gameInfo
+  let logo: string | undefined
+  let hasCloudSave = false
+  let size: string | undefined
+  if (gameInfo.runner !== 'sideload') {
+    logo = gameInfo.art_logo
+    hasCloudSave = gameInfo.cloud_save_enabled ?? false
+    size = gameInfo.install.install_size
+  }
+
   const [progress, previousProgress] = hasProgress(appName)
   const [showUninstallModal, setShowUninstallModal] = useState(false)
 
@@ -86,7 +90,7 @@ const GameCard = ({
   const grid = forceCard || layout === 'grid'
 
   const { status, folder } =
-    libraryStatus.find((game: GameStatus) => game.appName === appName) || {}
+    libraryStatus.find((game) => game.appName === appName) || {}
   const isInstalling = status === 'installing' || status === 'updating'
   const isUpdating = status === 'updating'
   const isReparing = status === 'repairing'
@@ -118,7 +122,7 @@ const GameCard = ({
   }
 
   function getImageFormatting() {
-    const imageBase = grid ? cover : coverList
+    const imageBase = cover
     if (imageBase === 'fallback') {
       return fallbackImage
     }
@@ -274,7 +278,7 @@ const GameCard = ({
     {
       // install
       label: t('button.install'),
-      onclick: () => (!isInstalled ? buttonClick() : () => null),
+      onclick: () => buttonClick(),
       show: !isInstalled
     },
     {
@@ -362,6 +366,7 @@ const GameCard = ({
           {haveStatus && <span className="progress">{getStatus()}</span>}
           <Link
             to={`/gamepage/${runner}/${appName}`}
+            state={{ gameInfo }}
             style={
               { '--installing-effect': installingGrayscale } as CSSProperties
             }
@@ -451,14 +456,13 @@ const GameCard = ({
   async function handlePlay(runner: Runner) {
     if (!isInstalled && !isQueued) {
       return install({
-        appName,
+        gameInfo,
         handleGameStatus,
         installPath: folder || 'default',
         isInstalling,
         previousProgress,
         progress,
         t,
-        runner,
         showDialogModal
       })
     }
@@ -484,4 +488,4 @@ const GameCard = ({
   }
 }
 
-export default GameCard
+export default React.memo(GameCard)

@@ -3,19 +3,20 @@ import {
   AppSettings,
   GameStatus,
   InstallProgress,
-  Runner
+  Runner,
+  GameInfo
 } from 'common/types'
 
 import { TFunction } from 'react-i18next'
-import { getGameInfo, sendKill } from './index'
+import { sendKill } from './index'
 import { DialogModalOptions } from 'frontend/types'
 
 const storage: Storage = window.localStorage
 
 type InstallArgs = {
-  appName: string
+  gameInfo: GameInfo
   handleGameStatus: (game: GameStatus) => Promise<void>
-  installPath: string
+  installPath?: string
   isInstalling: boolean
   previousProgress: InstallProgress | null
   progress: InstallProgress
@@ -25,12 +26,11 @@ type InstallArgs = {
   installDlcs?: boolean
   sdlList?: Array<string>
   installLanguage?: string
-  runner?: Runner
   showDialogModal: (options: DialogModalOptions) => void
 }
 
 async function install({
-  appName,
+  gameInfo,
   installPath,
   t,
   progress,
@@ -41,7 +41,6 @@ async function install({
   sdlList = [],
   installDlcs = false,
   installLanguage = 'en-US',
-  runner = 'legendary',
   platformToInstall = 'Windows',
   showDialogModal
 }: InstallArgs) {
@@ -49,7 +48,7 @@ async function install({
     return
   }
 
-  const { folder_name, is_installed } = (await getGameInfo(appName, runner))!
+  const { folder_name, is_installed, app_name: appName, runner } = gameInfo
   if (isInstalling) {
     // NOTE: This can't really happen, since `folder_name` can only be undefined if we got a
     //       SideloadGame from getGameInfo, but we can't "install" sideloaded games
@@ -125,7 +124,8 @@ async function install({
     sdlList,
     installLanguage,
     runner,
-    platformToInstall
+    platformToInstall,
+    gameInfo
   })
 }
 

@@ -125,7 +125,19 @@ async function prepareLaunch(
           } installed`
       }
     }
-    steamRuntime = [path, ...args]
+
+    // If we're using Soldier, `/run/` is masked by the runtime, making some games that are
+    // installed on drives other than the OS one un-playable. Fortunately, Soldier also allows
+    // you to share specific directories with the `--filesystem` flag
+    const sharedInstallPath =
+      !isNative && 'install_path' in gameInfo.install
+        ? gameInfo.install.install_path
+        : undefined
+    steamRuntime = [
+      path,
+      sharedInstallPath ? `--filesystem=${sharedInstallPath}` : '',
+      ...args
+    ]
   }
 
   return {

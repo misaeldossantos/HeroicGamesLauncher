@@ -2,7 +2,7 @@ import React, { useContext, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import ContextProvider from 'frontend/state/ContextProvider'
 import { GameInfo, Runner, SideloadGame } from 'common/types'
-import { GamesList } from '../GamesList'
+import GamesList from '../GamesList'
 import { configStore } from 'frontend/helpers/electronStores'
 
 interface Props {
@@ -29,7 +29,10 @@ function getRecentGames(
   return games
 }
 
-export default function RecentlyPlayed({ handleModal, onlyInstalled }: Props) {
+export default React.memo(function RecentlyPlayed({
+  handleModal,
+  onlyInstalled
+}: Props) {
   const { t } = useTranslation()
   const { epic, gog, sideloadedLibrary } = useContext(ContextProvider)
   const [recentGames, setRecentGames] = useState<(GameInfo | SideloadGame)[]>(
@@ -77,4 +80,4 @@ export default function RecentlyPlayed({ handleModal, onlyInstalled }: Props) {
       />
     </>
   )
-}
+})

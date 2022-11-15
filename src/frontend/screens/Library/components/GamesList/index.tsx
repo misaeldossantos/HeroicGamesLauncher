@@ -18,7 +18,7 @@ interface Props {
   isRecent?: boolean
 }
 
-export const GamesList = ({
+const GamesList = ({
   library = [],
   layout = 'grid',
   handleGameCardClick,
@@ -48,27 +48,11 @@ export const GamesList = ({
       )}
       {!!library.length &&
         library.map((gameInfo) => {
-          const {
-            title,
-            art_square,
-            art_cover,
-            app_name,
-            is_installed,
-            runner,
-            install: { platform }
-          } = gameInfo
+          const { app_name, is_installed, runner } = gameInfo
 
           let is_dlc = false
-          let install_size: string | undefined
-          let version: string | undefined
-          let art_logo: string | undefined
-          let cloud_save_enabled = false
           if (gameInfo.runner !== 'sideload') {
             is_dlc = gameInfo.install.is_dlc ?? false
-            install_size = gameInfo.install.install_size
-            version = gameInfo.install.version
-            art_logo = gameInfo.art_logo
-            cloud_save_enabled = gameInfo.cloud_save_enabled
           }
 
           if (is_dlc) {
@@ -82,27 +66,19 @@ export const GamesList = ({
           return (
             <GameCard
               key={app_name}
-              runner={runner}
-              cover={art_square}
-              coverList={art_cover}
-              logo={art_logo}
-              hasCloudSave={cloud_save_enabled}
-              title={title}
-              appName={app_name}
-              isInstalled={is_installed}
-              version={`${version}`}
-              size={`${install_size}`}
               hasUpdate={hasUpdate}
               buttonClick={() => {
                 if (gameInfo.runner !== 'sideload')
                   handleGameCardClick(app_name, runner, gameInfo)
               }}
               forceCard={layout === 'grid'}
-              installedPlatform={platform}
               isRecent={isRecent}
+              gameInfo={gameInfo}
             />
           )
         })}
     </div>
   )
 }
+
+export default React.memo(GamesList)

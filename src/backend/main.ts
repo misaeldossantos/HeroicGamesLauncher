@@ -356,7 +356,14 @@ if (!gotTheLock) {
       prefix: LogPrefix.Gog
     })
     // We can't use .config since apparently its not loaded fast enough.
-    const { language, darkTrayIcon } = await GlobalConfig.get().getSettings()
+    // TODO: Remove this after a couple of stable releases
+    // Affects only current users, not new installs
+    const settings = await GlobalConfig.get().getSettings()
+    const { language, darkTrayIcon } = settings
+    const currentConfigStore = configStore.get_nodefault('settings')
+    if (!currentConfigStore?.defaultInstallPath) {
+      configStore.set('settings', settings)
+    }
 
     runOnceWhenOnline(async () => {
       const isLoggedIn = LegendaryUser.isLoggedIn()
@@ -885,6 +892,11 @@ ipcMain.handle('writeConfig', (event, { appName, config }) => {
   if (appName === 'default') {
     GlobalConfig.get().config = config as AppSettings
     GlobalConfig.get().flush()
+    const currentConfigStore = configStore.get_nodefault('settings')
+    configStore.set('settings', {
+      ...currentConfigStore,
+      ...(config as AppSettings)
+    })
   } else {
     GameConfig.get(appName).config = config as GameSettings
     GameConfig.get(appName).flush()
@@ -929,6 +941,8 @@ let powerDisplayId: number | null
 ipcMain.handle(
   'launch',
   async (event, { appName, launchArguments, runner }): StatusPromise => {
+    launchArguments = isCLINoGui ? '--skip-version-check' : launchArguments
+
     const window = BrowserWindow.getAllWindows()[0]
     const isSideloaded = runner === 'sideload'
     const extGame = getGame(appName, runner)

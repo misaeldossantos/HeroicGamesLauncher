@@ -17,6 +17,7 @@ import {
 import { Category, DialogModalOptions } from 'frontend/types'
 import { TFunction, withTranslation } from 'react-i18next'
 import {
+  getGameInfo,
   getLegendaryConfig,
   getPlatform,
   install,
@@ -573,8 +574,12 @@ export class GlobalState extends PureComponent<Props> {
       )[0]
       const { appName, path, runner } = args
       if (!currentApp || (currentApp && currentApp.status !== 'installing')) {
+        const gameInfo = await getGameInfo(appName, runner)
+        if (!gameInfo || gameInfo.runner === 'sideload') {
+          return
+        }
         return install({
-          appName,
+          gameInfo,
           handleGameStatus: this.handleGameStatus,
           installPath: path,
           isInstalling: false,
@@ -585,7 +590,6 @@ export class GlobalState extends PureComponent<Props> {
             percent: 0
           },
           t,
-          runner,
           platformToInstall: 'Windows',
           showDialogModal: this.handleShowDialogModal
         })

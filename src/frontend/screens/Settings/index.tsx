@@ -16,14 +16,8 @@ import {
   SyncSaves,
   AdvancedSettings
 } from './sections'
-import {
-  AppSettings,
-  GameInfo,
-  GameSettings,
-  SideloadGame,
-  WineInstallation
-} from 'common/types'
-import { getGameInfo, writeConfig } from 'frontend/helpers'
+import { AppSettings, GameSettings, WineInstallation } from 'common/types'
+import { writeConfig } from 'frontend/helpers'
 import { UpdateComponent } from 'frontend/components/UI'
 import { LocationState, SettingsContextType } from 'frontend/types'
 import ContextProvider from 'frontend/state/ContextProvider'
@@ -46,8 +40,6 @@ function Settings() {
     AppSettings | GameSettings | null
   >(null)
 
-  const [, setGameInfo] = useState<GameInfo | SideloadGame | null>(null)
-
   const { appName = '', type = '' } = useParams()
   const isDefault = appName === 'default'
   const isGeneralSettings = type === 'general'
@@ -69,9 +61,7 @@ function Settings() {
       setCurrentConfig(config)
 
       if (!isDefault) {
-        const info = await getGameInfo(appName, runner)
-        setGameInfo(info)
-        setTitle(info?.title ?? appName)
+        setTitle(gameInfo?.title ?? appName)
       } else {
         setTitle(t('globalSettings', 'Global Settings'))
       }

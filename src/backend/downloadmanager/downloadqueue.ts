@@ -2,7 +2,7 @@ import { TypeCheckedStoreBackend } from './../electron_store'
 import { logError, logInfo, LogPrefix } from '../logger/logger'
 import { getInfo, getMainWindow } from '../utils'
 import { DMQueueElement } from 'common/types'
-import { installQueueElement } from './utils'
+import { installQueueElement, updateQueueElement } from './utils'
 
 const downloadManager = new TypeCheckedStoreBackend('downloadManager', {
   cwd: 'store',
@@ -14,6 +14,7 @@ const downloadManager = new TypeCheckedStoreBackend('downloadManager', {
 */
 
 type DownloadManagerState = 'idle' | 'running'
+type DMStatus = 'done' | 'error' | 'abort'
 let queueState: DownloadManagerState = 'idle'
 
 function getFirstQueueElement() {
@@ -21,10 +22,7 @@ function getFirstQueueElement() {
   return elements.at(0) ?? null
 }
 
-function addToFinished(
-  element: DMQueueElement,
-  status: 'done' | 'error' | 'abort'
-) {
+function addToFinished(element: DMQueueElement, status: DMStatus) {
   const elements = downloadManager.get('finished', [])
 
   const elementIndex = elements.findIndex(
@@ -54,8 +52,17 @@ async function initQueue() {
   queueState = element ? 'running' : 'idle'
 
   while (element) {
-    const { status } = await installQueueElement(window, element.params)
+    const queuedElements = downloadManager.get('queue', [])
+    window.webContents.send('changedDMQueueInformation', queuedElements)
+    element.startTime = Date.now()
+    queuedElements[0] = element
+    downloadManager.set('queue', queuedElements)
 
+    const { status } =
+      element.type === 'install'
+        ? await installQueueElement(window, element.params)
+        : await updateQueueElement(window, element.params)
+    element.endTime = Date.now()
     addToFinished(element, status)
     removeFromQueue(element.params.appName)
     element = getFirstQueueElement()
@@ -70,6 +77,14 @@ function addToQueue(element: DMQueueElement) {
     })
     return
   }
+
+  const mainWindow = getMainWindow()
+  mainWindow.webContents.send('setGameStatus', {
+    appName: element.params.appName,
+    runner: element.params.runner,
+    folder: element.params.path,
+    status: 'queued'
+  })
 
   const elements = downloadManager.get('queue', [])
 
@@ -96,6 +111,8 @@ function addToQueue(element: DMQueueElement) {
 }
 
 function removeFromQueue(appName: string) {
+  const mainWindow = getMainWindow()
+
   if (appName && downloadManager.has('queue')) {
     const elements = downloadManager.get('queue', [])
     const index = elements.findIndex(
@@ -103,15 +120,19 @@ function removeFromQueue(appName: string) {
     )
     if (index !== -1) {
       elements.splice(index, 1)
-      downloadManager.delete('queue')
       downloadManager.set('queue', elements)
     }
+
+    mainWindow.webContents.send('setGameStatus', {
+      appName,
+      status: 'done'
+    })
 
     logInfo([appName, 'removed from download manager.'], {
       prefix: LogPrefix.DownloadManager
     })
 
-    getMainWindow().webContents.send('changedDMQueueInformation', elements)
+    mainWindow.webContents.send('changedDMQueueInformation', elements)
   }
 }
 

@@ -45,6 +45,7 @@ import {
 } from 'frontend/components/UI/Dialog'
 
 import StoreLogos from 'frontend/components/UI/StoreLogos'
+import HowLongToBeat from 'frontend/components/UI/HowLongToBeat'
 
 export default React.memo(function GamePage(): JSX.Element | null {
   const { appName, runner } = useParams() as { appName: string; runner: Runner }
@@ -58,15 +59,8 @@ export default React.memo(function GamePage(): JSX.Element | null {
 
   const [showModal, setShowModal] = useState({ game: '', show: false })
 
-  const {
-    libraryStatus,
-    handleGameStatus,
-    epic,
-    gog,
-    gameUpdates,
-    platform,
-    showDialogModal
-  } = useContext(ContextProvider)
+  const { libraryStatus, epic, gog, gameUpdates, platform, showDialogModal } =
+    useContext(ContextProvider)
 
   const { status } =
     libraryStatus.find((game) => game.appName === appName) || {}
@@ -74,7 +68,6 @@ export default React.memo(function GamePage(): JSX.Element | null {
   const [progress, previousProgress] = hasProgress(appName)
 
   const [gameInfo, setGameInfo] = useState(locationGameInfo)
-  const [updateRequested, setUpdateRequested] = useState(false)
   const [autoSyncSaves, setAutoSyncSaves] = useState(false)
   const [savesPath, setSavesPath] = useState('')
   const [gogSaves, setGOGSaves] = useState<GOGCloudSavesLocation[]>([])
@@ -122,78 +115,67 @@ export default React.memo(function GamePage(): JSX.Element | null {
   useEffect(() => {
     const updateConfig = async () => {
       if (gameInfo) {
-        const { install, is_installed } = gameInfo
-        if (is_installed) {
-          if (gameInfo.runner !== 'sideload') {
-            const { is_linux_native, is_mac_native } = gameInfo
-            const installPlatform =
-              install.platform || (is_linux_native && isLinux)
-                ? 'linux'
-                : is_mac_native && isMac
-                ? 'Mac'
-                : 'Windows'
-            getInstallInfo(appName, runner, installPlatform)
-              .then((info) => {
-                if (!info) {
-                  throw 'Cannot get game info'
-                }
-                setGameInstallInfo(info)
-              })
-              .catch((error) => {
-                console.error(error)
-                window.api.logError(`${`${error}`}`)
-                setHasError({ error: true, message: `${error}` })
-              })
-          }
+        const { install } = gameInfo
 
-          try {
-            const {
-              autoSyncSaves,
-              savesPath,
-              gogSaves,
-              wineVersion,
-              winePrefix
-            } = await window.api.requestGameSettings(appName)
-
-            if (!isWin) {
-              let wine = wineVersion.name
-                .replace('Wine - ', '')
-                .replace('Proton - ', '')
-              if (wine.includes('Default')) {
-                wine = wine.split('-')[0]
+        if (gameInfo.runner !== 'sideload') {
+          const { is_linux_native, is_mac_native } = gameInfo
+          const installPlatform =
+            install.platform || (is_linux_native && isLinux)
+              ? 'linux'
+              : is_mac_native && isMac
+              ? 'Mac'
+              : 'Windows'
+          getInstallInfo(appName, runner, installPlatform)
+            .then((info) => {
+              if (!info) {
+                throw 'Cannot get game info'
               }
-              setWineVersion(wine)
-              setWinePrefix(winePrefix)
-            }
+              setGameInstallInfo(info)
+            })
+            .catch((error) => {
+              console.error(error)
+              window.api.logError(`${`${error}`}`)
+              setHasError({ error: true, message: `${error}` })
+            })
+        }
 
-            if (
-              'cloud_save_enabled' in gameInfo &&
-              gameInfo.cloud_save_enabled
-            ) {
-              setAutoSyncSaves(autoSyncSaves)
-              setGOGSaves(gogSaves ?? [])
-              return setSavesPath(savesPath)
+        try {
+          const {
+            autoSyncSaves,
+            savesPath,
+            gogSaves,
+            wineVersion,
+            winePrefix
+          } = await window.api.requestGameSettings(appName)
+
+          if (!isWin) {
+            let wine = wineVersion.name
+              .replace('Wine - ', '')
+              .replace('Proton - ', '')
+            if (wine.includes('Default')) {
+              wine = wine.split('-')[0]
             }
-          } catch (error) {
-            setHasError({ error: true, message: error })
-            window.api.logError(`${error}`)
+            setWineVersion(wine)
+            setWinePrefix(winePrefix)
           }
+
+          if (gameInfo.runner !== 'sideload' && gameInfo.cloud_save_enabled) {
+            setAutoSyncSaves(autoSyncSaves)
+            setGOGSaves(gogSaves ?? [])
+            return setSavesPath(savesPath)
+          }
+        } catch (error) {
+          setHasError({ error: true, message: error })
+          window.api.logError(`${error}`)
         }
       }
     }
     updateConfig()
-  }, [isInstalling, isPlaying, appName, epic.library, gog.library])
+  }, [status, epic.library, gog.library, gameInfo])
 
-  async function handleUpdate() {
-    setUpdateRequested(true)
-    await handleGameStatus({
-      appName,
-      runner: gameInfo.runner,
-      status: 'updating'
-    })
-    await updateGame(appName, gameInfo.runner)
-    await handleGameStatus({ appName, runner: gameInfo.runner, status: 'done' })
-    setUpdateRequested(false)
+  function handleUpdate() {
+    if (gameInfo.runner !== 'sideload')
+      updateGame({ appName, runner, gameInfo })
   }
 
   function handleModal() {
@@ -308,7 +290,7 @@ export default React.memo(function GamePage(): JSX.Element | null {
                     storeUrl={'store_url' in gameInfo ? gameInfo.store_url : ''}
                     runner={gameInfo.runner}
                     handleUpdate={handleUpdate}
-                    disableUpdate={updateRequested || isUpdating}
+                    disableUpdate={isInstalling || isUpdating}
                     onShowRequirements={
                       hasRequirements
                         ? () => setShowRequirements(true)
@@ -328,6 +310,8 @@ export default React.memo(function GamePage(): JSX.Element | null {
                       : ''
                     : ''}
                 </div>
+                <HowLongToBeat title={title} />
+
                 {is_installed && showCloudSaveInfo && (
                   <div
                     style={{
@@ -458,7 +442,7 @@ export default React.memo(function GamePage(): JSX.Element | null {
               )}
               <Anticheat gameInfo={gameInfo} />
               <div className="buttonsWrapper">
-                {is_installed && (
+                {is_installed && !isQueued && (
                   <button
                     disabled={
                       isReparing || isMoving || isUpdating || isUninstalling
@@ -470,7 +454,7 @@ export default React.memo(function GamePage(): JSX.Element | null {
                     {getPlayLabel()}
                   </button>
                 )}
-                {is_installed ? (
+                {is_installed && (
                   <Link
                     to={pathname}
                     state={{
@@ -481,11 +465,12 @@ export default React.memo(function GamePage(): JSX.Element | null {
                       hasCloudSave: cloud_save_enabled,
                       gameInfo
                     }}
-                    className={`button ${getButtonClass(is_installed)}`}
+                    className={`button is-primary`}
                   >
-                    {`${getButtonLabel(is_installed)}`}
+                    {t('submenu.settings')}
                   </Link>
-                ) : (
+                )}
+                {(!is_installed || isQueued) && (
                   <button
                     onClick={async () => handleInstall(is_installed)}
                     disabled={
@@ -637,11 +622,11 @@ export default React.memo(function GamePage(): JSX.Element | null {
   }
 
   function getButtonLabel(is_installed: boolean) {
-    if (is_installed) {
-      return t('submenu.settings')
-    }
     if (isQueued) {
       return t('button.queue.remove', 'Remove from Queue')
+    }
+    if (is_installed) {
+      return t('submenu.settings')
     }
     if (isInstalling) {
       return t('button.cancel')
@@ -689,11 +674,6 @@ export default React.memo(function GamePage(): JSX.Element | null {
     if (gameInfo.runner === 'sideload') return
 
     if (isQueued) {
-      handleGameStatus({
-        appName,
-        runner: gameInfo.runner,
-        status: 'done'
-      })
       storage.removeItem(appName)
       return window.api.removeFromDMQueue(appName)
     }
@@ -709,7 +689,6 @@ export default React.memo(function GamePage(): JSX.Element | null {
 
     return install({
       gameInfo,
-      handleGameStatus,
       installPath: gameStatus.folder,
       isInstalling,
       previousProgress,

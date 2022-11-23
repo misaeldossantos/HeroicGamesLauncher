@@ -234,15 +234,21 @@ export interface WineInstallation {
 
 export interface InstallArgs {
   path: string
-  installDlcs: boolean
-  sdlList: string[]
   platformToInstall: InstallPlatform
+  installDlcs?: boolean
+  sdlList?: string[]
   installLanguage?: string
 }
 
 export interface InstallParams extends InstallArgs {
   appName: string
   gameInfo: GameInfo | SideloadGame
+  runner: Runner
+}
+
+export interface UpdateParams {
+  appName: string
+  gameInfo: GameInfo
   runner: Runner
 }
 
@@ -534,9 +540,16 @@ export interface Tools {
   appName: string
   runner: Runner
 }
+export interface UpdateParams {
+  gameInfo: GameInfo
+}
 
 export interface DMQueueElement {
+  type: 'update' | 'install'
   params: InstallParams
+  addToQueueTime: number
+  startTime: number
+  endTime: number
   status?: 'done' | 'error' | 'abort'
 }
 

@@ -1,6 +1,12 @@
 import './index.css'
 
-import React, { useContext, CSSProperties, useMemo, useState } from 'react'
+import React, {
+  useContext,
+  CSSProperties,
+  useMemo,
+  useState,
+  useEffect
+} from 'react'
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faRepeat } from '@fortawesome/free-solid-svg-icons'
@@ -57,8 +63,8 @@ const GameCard = ({
     title,
     art_square: cover,
     app_name: appName,
-    is_installed: isInstalled,
     runner,
+    is_installed,
     install: { platform: installedPlatform }
   } = gameInfo
   let logo: string | undefined
@@ -72,9 +78,12 @@ const GameCard = ({
 
   const [progress, previousProgress] = hasProgress(appName)
   const [showUninstallModal, setShowUninstallModal] = useState(false)
+  const [gameAvailable, setGameAvailable] = useState(false)
 
   const { t } = useTranslation('gamepage')
   const { t: t2 } = useTranslation()
+
+  const isInstalled = is_installed && gameAvailable
 
   const navigate = useNavigate()
   const {
@@ -86,6 +95,17 @@ const GameCard = ({
     allTilesInColor,
     showDialogModal
   } = useContext(ContextProvider)
+
+  useEffect(() => {
+    const checkGameAvailable = async () => {
+      const gameAvailable = await window.api.isGameAvailable({
+        appName,
+        runner
+      })
+      setGameAvailable(gameAvailable)
+    }
+    checkGameAvailable()
+  }, [appName])
 
   const grid = forceCard || layout === 'grid'
 
@@ -116,9 +136,8 @@ const GameCard = ({
   const imageSrc = getImageFormatting()
 
   async function handleUpdate() {
-    await handleGameStatus({ appName, runner, status: 'updating' })
-    await updateGame(appName, runner)
-    return handleGameStatus({ appName, runner, status: 'done' })
+    if (gameInfo.runner !== 'sideload')
+      return updateGame({ appName, runner, gameInfo })
   }
 
   function getImageFormatting() {
@@ -134,6 +153,9 @@ const GameCard = ({
   }
 
   function getStatus() {
+    if (isQueued) {
+      return `${t('status.queued', 'Queued')}`
+    }
     if (isUninstalling) {
       return t('status.uninstalling', 'Uninstalling')
     }
@@ -151,9 +173,6 @@ const GameCard = ({
     }
     if (isInstalled) {
       return `${t('status.installed')} ${runner === 'sideload' ? '' : size}`
-    }
-    if (isQueued) {
-      return `${t('status.queued', 'Queued')}`
     }
 
     return t('status.notinstalled')
@@ -267,19 +286,19 @@ const GameCard = ({
       // launch game
       label: t('label.playing.start'),
       onclick: async () => handlePlay(runner),
-      show: isInstalled && !isPlaying && !isUpdating
+      show: isInstalled && !isPlaying && !isUpdating && !isQueued
     },
     {
       // update
       label: t('button.update', 'Update'),
       onclick: async () => handleUpdate(),
-      show: hasUpdate && !isUpdating
+      show: hasUpdate && !isUpdating && !isQueued
     },
     {
       // install
       label: t('button.install'),
       onclick: () => buttonClick(),
-      show: !isInstalled
+      show: !isInstalled && !isQueued
     },
     {
       // cancel installation/update
@@ -352,6 +371,8 @@ const GameCard = ({
 
   const { activeController } = useContext(ContextProvider)
 
+  const showUpdateButton = hasUpdate && !isUpdating && !isQueued
+
   return (
     <div>
       {showUninstallModal && (
@@ -415,7 +436,7 @@ const GameCard = ({
                 gamepad: activeController
               })}
             >
-              {hasUpdate && !isUpdating && (
+              {showUpdateButton && (
                 <SvgButton
                   className="updateIcon"
                   title={`${t('button.update')} (${title})`}
@@ -436,7 +457,8 @@ const GameCard = ({
                           runner,
                           hasCloudSave,
                           isLinuxNative,
-                          isMacNative
+                          isMacNative,
+                          gameInfo
                         }
                       })
                     }
@@ -454,10 +476,10 @@ const GameCard = ({
   )
 
   async function handlePlay(runner: Runner) {
-    if (!isInstalled && !isQueued) {
+    console.log('handlePlay', isInstalled, isQueued)
+    if (!isInstalled && !isQueued && gameInfo.runner !== 'sideload') {
       return install({
         gameInfo,
-        handleGameStatus,
         installPath: folder || 'default',
         isInstalling,
         previousProgress,

@@ -6,7 +6,6 @@ import {
   GameInfo,
   GameStatus,
   HiddenGame,
-  InstalledInfo,
   RefreshOptions,
   Runner,
   WineVersionInfo,
@@ -93,9 +92,7 @@ export class GlobalState extends PureComponent<Props> {
   loadGOGLibrary = (): Array<GameInfo> => {
     const games = gogLibraryStore.get('games', [])
 
-    const installedGames =
-      (gogInstalledGamesStore.get('installed', []) as Array<InstalledInfo>) ||
-      []
+    const installedGames = gogInstalledGamesStore.get('installed', [])
     for (const igame in games) {
       for (const installedGame of installedGames) {
         if (installedGame.appName === games[igame].app_name) {
@@ -364,8 +361,7 @@ export class GlobalState extends PureComponent<Props> {
     console.log('refreshing')
 
     const currentLibraryLength = this.state.epic.library?.length
-    let epicLibrary: Array<GameInfo> =
-      (libraryStore.get('library', []) as Array<GameInfo>) || []
+    let epicLibrary = libraryStore.get('library', [])
 
     const gogLibrary: Array<GameInfo> = this.loadGOGLibrary()
     if (!epicLibrary.length || !this.state.epic.library.length) {
@@ -580,7 +576,6 @@ export class GlobalState extends PureComponent<Props> {
         }
         return install({
           gameInfo,
-          handleGameStatus: this.handleGameStatus,
           installPath: path,
           isInstalling: false,
           previousProgress: null,

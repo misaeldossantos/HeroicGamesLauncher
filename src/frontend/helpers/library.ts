@@ -8,7 +8,7 @@ import {
 } from 'common/types'
 
 import { TFunction } from 'react-i18next'
-import { getGameInfo, sendKill } from './index'
+import { getGameInfo, sendKill, syncSaves } from './index'
 import { DialogModalOptions } from 'frontend/types'
 
 const storage: Storage = window.localStorage
@@ -160,12 +160,27 @@ async function handleStopInstallation(
 const repair = async (appName: string, runner: Runner): Promise<void> =>
   window.api.repair(appName, runner)
 
+const autoSyncSaves = async (
+  appName: string,
+  gameInfo: GameInfo | null
+): Promise<string> => {
+  const { savesPath, gogSaves } = await window.api.requestGameSettings(appName)
+
+  if (gameInfo?.runner === 'legendary') {
+    return syncSaves(savesPath, appName, gameInfo.runner)
+  } else if (gameInfo?.runner === 'gog' && gogSaves !== undefined) {
+    return window.api.syncGOGSaves(gogSaves, appName, '')
+  }
+  return 'Unable to sync saves.'
+}
+
 type LaunchOptions = {
   appName: string
   t: TFunction<'gamepage'>
   launchArguments?: string
   runner: Runner
   hasUpdate: boolean
+  syncCloud: boolean
   showDialogModal: (options: DialogModalOptions) => void
 }
 
@@ -175,6 +190,7 @@ const launch = async ({
   launchArguments = '',
   runner,
   hasUpdate,
+  syncCloud,
   showDialogModal
 }: LaunchOptions): Promise<{ status: 'done' | 'error' }> => {
   if (hasUpdate) {
@@ -212,6 +228,17 @@ const launch = async ({
     })
 
     return launchFinished
+  }
+
+  const gameInfo = await getGameInfo(appName, runner)
+  if (syncCloud && gameInfo?.runner !== 'sideload') {
+    await autoSyncSaves(appName, gameInfo)
+
+    const status = await window.api.launch({ appName, launchArguments, runner })
+
+    await autoSyncSaves(appName, gameInfo)
+
+    return status
   }
   return window.api.launch({ appName, launchArguments, runner })
 }

@@ -133,7 +133,8 @@ export default function SideloadDialog({
       art_cover: imageUrl,
       is_installed: true,
       art_square: imageUrl,
-      canRunOffline: true
+      canRunOffline: true,
+      cloud_save_enabled: false
     })
     const gameSettings = await getGameSettings(app_name, 'sideload')
     if (!gameSettings) {
@@ -144,11 +145,6 @@ export default function SideloadDialog({
       config: {
         ...gameSettings,
         winePrefix,
-        // @ts-expect-error: Issue here is that wineVersion might not be necessary for native games
-        //                   Ideally we'd solve this by having a base `GameSettings` interface with
-        //                   two children (`NativeGameSettings` and `NonNativeGameSettings`?), one with
-        //                   a wineVersion property of type `WineInstallation`, the other with one of
-        //                   type `undefined`
         wineVersion
       }
     })
@@ -197,7 +193,6 @@ export default function SideloadDialog({
         }
         await writeConfig({
           appName: app_name,
-          // @ts-expect-error See other ts-expect-error above
           config: { ...gameSettings, winePrefix, wineVersion }
         })
         await window.api.runWineCommand({

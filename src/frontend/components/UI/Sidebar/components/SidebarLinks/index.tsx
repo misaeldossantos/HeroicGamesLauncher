@@ -190,8 +190,7 @@ export default function SidebarLinks() {
           state={{
             fromGameCard: false,
             runner: runner,
-            hasCloudSave:
-              'cloud_save_enabled' in gameInfo && gameInfo.cloud_save_enabled
+            hasCloudSave: gameInfo.cloud_save_enabled
           }}
         >
           <>
@@ -248,21 +247,19 @@ export default function SidebarLinks() {
                 </span>
               )}
             </NavLink>
-            {'cloud_save_enabled' in gameInfo &&
-              gameInfo.cloud_save_enabled &&
-              !isLinuxGame && (
-                <NavLink
-                  role="link"
-                  data-testid="linkSync"
-                  to={`/settings/${runner}/${appName}/sync`}
-                  state={{ ...state, runner: state?.runner }}
-                  className={classNames('Sidebar__item SidebarLinks__subItem', {
-                    ['active']: type === 'sync'
-                  })}
-                >
-                  <span>{t('settings.navbar.sync')}</span>
-                </NavLink>
-              )}
+            {gameInfo.cloud_save_enabled && !isLinuxGame && (
+              <NavLink
+                role="link"
+                data-testid="linkSync"
+                to={`/settings/${runner}/${appName}/sync`}
+                state={{ ...state, runner: state?.runner }}
+                className={classNames('Sidebar__item SidebarLinks__subItem', {
+                  ['active']: type === 'sync'
+                })}
+              >
+                <span>{t('settings.navbar.sync')}</span>
+              </NavLink>
+            )}
             {isDefaultSetting && (
               <NavLink
                 role="link"

@@ -66,7 +66,8 @@ export function addNewApp({
     art_cover,
     is_installed: true,
     art_square,
-    canRunOffline: true
+    canRunOffline: true,
+    cloud_save_enabled: false
   }
 
   const current = libraryStore.get('games', [])

@@ -8,6 +8,7 @@ import useGlobalStore from '../../hooks/useGlobalStore'
 import { getLibraryTitle } from './constants'
 import Lottie from 'lottie-react'
 import lottieRefreshing from 'frontend/assets/loading-controler.json'
+import { AnimatePresence, motion } from 'framer-motion'
 
 const Library = () => {
   const globalStore = useGlobalStore()
@@ -20,53 +21,90 @@ const Library = () => {
 
   useEffect(() => {
     if (listingRef.current) {
-      listingRef.current.scrollTo(libraryController.listScrollPosition.get())
+      listingRef.current.scrollTo(libraryController.listScrollPosition)
+    }
+
+    const interval = setInterval(() => {
+      libraryController.setListDimensions({
+        height: listingRef.current?.scrollHeight || 0,
+        width: listingRef.current?.scrollWidth || 0
+      })
+    }, 1000)
+    return () => {
+      clearInterval(interval)
     }
   }, [listingRef])
 
-  const { t } = useTranslation()
+  // const backToTop = () =>
+  //   listingRef.current?.scrollTo({ top: 0, left: 0, behavior: 'smooth' })
 
   return (
     <>
       <Header />
-
-      <div
-        className="listing"
-        ref={listingRef}
-        onScroll={(ev) => {
-          const { scrollTop, scrollLeft } = ev.currentTarget
-          libraryController.listScrollPosition.set({
-            left: scrollLeft,
-            top: scrollTop
-          })
-        }}
-      >
-        <span id="top" />
-        {globalStore.refreshingLibrary ? (
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexDirection: 'column',
-              height: '100%',
-              flex: 1
-            }}
-          >
-            <Lottie
-              animationData={lottieRefreshing}
-              style={{ height: 400, width: 400 }}
-            />
-            {/*<span>{t('loading.default', 'Loading')}</span>*/}
-          </div>
-        ) : (
-          <>
-            {tab === 'recent' && <RecentGames />}
-            {tab === 'favourite' && <FavouriteList />}
-            {tab === 'all' && <MainLibrary />}
-          </>
-        )}
-      </div>
+      <AnimatePresence>
+        <div
+          className="listing"
+          ref={listingRef}
+          onScroll={(ev) => {
+            const { scrollTop, scrollLeft } = ev.currentTarget
+            libraryController.setListScrollPosition({
+              left: scrollLeft,
+              top: scrollTop
+            })
+          }}
+        >
+          <span id="top" />
+          {globalStore.refreshingLibrary ? (
+            <motion.div
+              animate={{ opacity: 1 }}
+              initial={{ opacity: 0 }}
+              transition={{ duration: 1 }}
+              exit={{ opacity: 0 }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexDirection: 'column',
+                height: '100%',
+                flex: 1
+              }}
+            >
+              <Lottie
+                animationData={lottieRefreshing}
+                style={{ height: 400, width: 400 }}
+              />
+              {/*<span>{t('loading.default', 'Loading')}</span>*/}
+            </motion.div>
+          ) : (
+            <>
+              {tab === 'recent' && <RecentGames />}
+              {tab === 'favourite' && <FavouriteList />}
+              {tab === 'all' && <MainLibrary />}
+            </>
+          )}
+        </div>
+      </AnimatePresence>
+      {/*<Observer>*/}
+      {/*  {() => {*/}
+      {/*    return (*/}
+      {/*      <AnimatePresence>*/}
+      {/*        {libraryController.isListScrollingToTop && (*/}
+      {/*          <motion.div*/}
+      {/*            key={'backToTopBtn'}*/}
+      {/*            layoutId={'backToTopBtn'}*/}
+      {/*            exit={{ bottom: -document.body?.clientHeight }}*/}
+      {/*            animate={{ bottom: 0 }}*/}
+      {/*            initial={{ bottom: -document.body?.clientHeight }}*/}
+      {/*          >*/}
+      {/*            <button id="backToTopBtn" onClick={backToTop}>*/}
+      {/*              <ArrowDropUp className="material-icons" />*/}
+      {/*            </button>*/}
+      {/*          </motion.div>*/}
+      {/*        )}*/}
+      {/*      </AnimatePresence>*/}
+      {/*    )*/}
+      {/*  }}*/}
+      {/*</Observer>*/}
     </>
   )
 }

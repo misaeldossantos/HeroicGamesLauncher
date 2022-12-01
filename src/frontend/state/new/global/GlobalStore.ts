@@ -106,6 +106,9 @@ export class GlobalStore {
 
   // library with Game instances
   get libraryGames() {
+    if (!this.gameInstancesByAppName) {
+      return []
+    }
     return Object.values(this.gameInstancesByAppName)
   }
 

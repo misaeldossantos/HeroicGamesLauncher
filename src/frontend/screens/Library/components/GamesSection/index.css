@@ -21,7 +21,6 @@
 }
 
 .numberOfgames {
-  margin-left: 4px;
   font-size: var(--text-md);
   font-weight: var(--regular);
   background: var(--input-background);

@@ -5,6 +5,7 @@ import LibraryListControler from './LibraryListController'
 import { LibraryPaginationOptions } from '../fetch-data/LibraryPagination'
 import { GlobalStore } from '../global/GlobalStore'
 import { merge, pick } from 'lodash'
+import { debounce } from '@mui/material'
 
 const STORAGE_KEY = 'data.library-page'
 
@@ -15,10 +16,13 @@ export default class LibraryPageController {
   )
   readonly category = Box.create<Category>('all')
   readonly platform = Box.create('all')
-  readonly listScrollPosition = Box.create({ left: 0, top: 0 })
   readonly mainLibrary: LibraryListControler
   readonly recentGames: LibraryListControler
   readonly favouritesLibrary: LibraryListControler
+
+  listScrollPosition = { left: 0, top: 0 }
+  listDimensions: { height: number; width: number } = { height: 0, width: 0 }
+  previousListScrollPosition = { ...this.listScrollPosition }
 
   constructor(private globalStore: GlobalStore) {
     this.mainLibrary = new LibraryListControler(
@@ -56,6 +60,28 @@ export default class LibraryPageController {
         })
       )
     })
+  }
+
+  setListScrollPosition = debounce(
+    (scrollPosition: { top: number; left: number }) => {
+      this.previousListScrollPosition = { ...this.listScrollPosition }
+      this.listScrollPosition = { ...scrollPosition }
+    },
+    300
+  )
+
+  setListDimensions = debounce(
+    (listDimensions: { width: number; height: number }) => {
+      this.listDimensions = { ...listDimensions }
+    },
+    300
+  )
+
+  get isListScrollingToTop() {
+    if (!this.listScrollPosition?.top && !this.listScrollPosition?.left) {
+      return false
+    }
+    return this.listScrollPosition?.top < this.previousListScrollPosition?.top
   }
 
   loadSaved() {

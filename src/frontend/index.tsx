@@ -101,15 +101,15 @@ const container = document.getElementById('root')
 const root = createRoot(container!) // createRoot(container!) if you use TypeScript
 
 root.render(
-  <React.StrictMode>
-    <I18nextProvider i18n={i18next}>
-      <Suspense fallback={<UpdateComponentBase message="Loading" />}>
-        <GlobalState>
-          <App />
-        </GlobalState>
-      </Suspense>
-    </I18nextProvider>
-  </React.StrictMode>
+  // <React.StrictMode>
+  <I18nextProvider i18n={i18next}>
+    <Suspense fallback={<UpdateComponentBase message="Loading" />}>
+      <GlobalState>
+        <App />
+      </GlobalState>
+    </Suspense>
+  </I18nextProvider>
+  // </React.StrictMode>
 )
 
 // helper function to set the theme class and load custom css if needed

@@ -1,4 +1,4 @@
-import { makeAutoObservable } from 'mobx'
+import { makeAutoObservable, reaction } from 'mobx'
 
 export class Box<T> {
   constructor(private _val: T) {
@@ -36,5 +36,22 @@ export class Box<T> {
 
   get val() {
     return this._val
+  }
+
+  watch(fn: (val: T) => void) {
+    return reaction(() => this.val, fn)
+  }
+}
+
+export class MobxState {
+  disposers = new Set<() => void>()
+  destroy() {
+    for (const dispose of this.disposers) {
+      dispose()
+    }
+  }
+
+  addDisposer(disposer: () => void) {
+    this.disposers.add(disposer)
   }
 }

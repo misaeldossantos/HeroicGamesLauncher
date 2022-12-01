@@ -1,9 +1,10 @@
 import { Category } from '../../../types'
 import { GameInfo } from '../../../../common/types'
 import { Box } from '../common/utils'
-import { makeAutoObservable, runInAction } from 'mobx'
+import { autorun, makeAutoObservable, runInAction } from 'mobx'
 import { SortGame } from '../common/common'
 import { GlobalStore } from '../global/GlobalStore'
+import { debounce } from 'lodash'
 
 function fixFilter(text: string) {
   const regex = new RegExp(/([?\\|*|+|(|)|[|]|])+/, 'g')
@@ -65,8 +66,22 @@ export default class LibraryPagination {
 
   refreshing = false
 
+  allResults = []
+
   constructor(private options: LibraryPaginationOptions) {
     makeAutoObservable(this)
+    this.init()
+  }
+
+  init() {
+    const setAllResults = debounce((val) => {
+      runInAction(() => {
+        this.allResults = val
+      })
+    }, 300)
+    setTimeout(() => {
+      autorun(() => setAllResults(this.getResults()))
+    }, 300)
   }
 
   private get globalStore() {
@@ -91,7 +106,7 @@ export default class LibraryPagination {
     return this.allResults.length
   }
 
-  get allResults() {
+  getResults() {
     const regex = new RegExp(fixFilter(this.term || ''), 'i')
     const filtered = this.options.globalStore.libraryGames.filter((i) => {
       if (
@@ -143,6 +158,7 @@ export default class LibraryPagination {
     const installingGames = library.filter(
       (g) => !g.isInstalled && g.isInstalling
     )
+
     return this.sortInstalled
       ? [...installingGames, ...installed, ...notInstalled]
       : library

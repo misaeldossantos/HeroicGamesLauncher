@@ -42,7 +42,13 @@ const GamesList = (props: Props): JSX.Element => {
       )}
       <AnimatePresence>
         {library.map((item, index) => (
-          <GameItem key={item.appName} game={item} index={index} {...props} />
+          <GameItem
+            key={item.appName}
+            game={item}
+            index={index}
+            {...props}
+            listLength={library.length}
+          />
         ))}
       </AnimatePresence>
     </div>
@@ -57,6 +63,7 @@ const GameItem = observer(
   ({
     game,
     index,
+    listLength,
     handleGameCardClick,
     onlyInstalled,
     layout = 'grid',
@@ -65,23 +72,24 @@ const GameItem = observer(
   }: {
     game: Game
     index: number
+    listLength: number
   } & Props) => {
     const { libraryController } = useGlobalStore()
     const wrapperRef = useRef<HTMLDivElement>(null)
-    const cardVisible = useComputedValue(
-      () => {
-        const scrollPosition = libraryController.listScrollPosition.get()
-        if (!scrollPosition) {
-          return false
-        }
-        const bodyHeight = document.body?.clientHeight || 0
-        const { offsetTop = 0 } = wrapperRef.current || {}
-        const diff = offsetTop - scrollPosition.top
-        const percOfScreen = getPercValue(bodyHeight, 20)
-        return diff > -percOfScreen && diff < bodyHeight + percOfScreen
-      },
-      { debounceTime: 300 }
-    )
+
+    const cardVisible = useComputedValue(() => {
+      // to track list height
+      libraryController.listDimensions.height
+      const scrollPosition = libraryController.listScrollPosition
+      if (!scrollPosition) {
+        return false
+      }
+      const bodyHeight = document.body?.clientHeight || 0
+      const { offsetTop = 0 } = wrapperRef.current || {}
+      const diff = offsetTop - scrollPosition.top
+      const percOfScreen = getPercValue(bodyHeight, 20)
+      return diff > -percOfScreen && diff < bodyHeight + percOfScreen
+    })
 
     const {
       app_name,
@@ -104,23 +112,37 @@ const GameItem = observer(
     return (
       <div
         style={{
-          minHeight: layout === 'grid' ? 200 : 30,
-          minWidth: 10
+          minHeight: layout === 'grid' ? 300 : 30,
+          minWidth: 1
         }}
         ref={wrapperRef}
       >
         {cardVisible && (
           <motion.div
             layoutId={layoutId}
-            animate={{ scale: 1, opacity: 1 }}
+            animate={{
+              scale: 1,
+              opacity: 1,
+              transition: {
+                delay: 0.03
+                // (libraryController.isListScrollingToTop
+                //   ? listLength - index
+                //   : index) * 0.03
+              }
+            }}
             initial={{
               scale: layout === 'grid' ? 0.7 : 1,
               opacity: 0
             }}
             exit={{
-              opacity: 0
+              opacity: 0,
+              transition: {
+                delay: 0.03
+              }
             }}
-            transition={{ type: 'tween', delay: index * 0.03 }}
+            transition={{
+              type: 'tween'
+            }}
           >
             <GameCard
               key={app_name}

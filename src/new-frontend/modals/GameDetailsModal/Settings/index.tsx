@@ -4,7 +4,7 @@ import { observer } from 'mobx-react'
 import { Flex } from '@chakra-ui/react'
 import WineSection from './WineSection'
 import OthersSection from './OthersSection'
-import useGlobalStore from '../../../hooks/useGlobalStore'
+import useGlobalStore from '../../../core/hooks/useGlobalStore'
 
 const Settings: React.FC<{ game: Game }> = ({ game }) => {
     const globalStore = useGlobalStore()

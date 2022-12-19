@@ -1,18 +1,14 @@
 import React, { useRef } from 'react'
 import { Runner } from 'common/types'
 import GameCard from '../GameCard'
-import { useTranslation } from 'react-i18next'
 import { Game } from 'new-frontend/core/state/model/Game'
-import { AnimatePresence, motion } from 'framer-motion'
 import { observer } from 'mobx-react'
-import useComputedValue from 'new-frontend/hooks/useComputedValue'
-import useGlobalStore from 'new-frontend/hooks/useGlobalStore'
-import { Box, Grid } from '@chakra-ui/react'
+import useGlobalStore from 'new-frontend/core/hooks/useGlobalStore'
+import { Grid } from '@chakra-ui/react'
 
 interface Props {
     library: Game[]
     layout?: string
-    isFirstLane?: boolean
     handleGameCardClick?: (app_name: string, runner: Runner, game: Game) => void
     onlyInstalled?: boolean
     isRecent?: boolean
@@ -20,34 +16,29 @@ interface Props {
 }
 
 const GamesList = (props: Props): JSX.Element => {
-    const { t } = useTranslation()
+    // const { t } = useTranslation()
     const { library = [], layout = 'grid' } = props
 
     return (
         <Grid
-            gridTemplateColumns={'repeat(auto-fill, minmax(156px, 1fr))'}
-            gridGap={'1.5rem'}
+            gridTemplateColumns={'repeat(auto-fill, minmax(250px, 1fr))'}
             padding={'0 var(--space-md-fixed) var(--space-3xl)'}
+            rowGap={'40px'}
             margin={' var(--space-md) 0'}
             key={props.listName + '-' + layout}
+            scrollSnapType={'mandatory'}
         >
-            <Box r-if={layout === 'list'}>
-                <span>{t('game.title', 'Game Title')}</span>
-                <span>{t('game.status', 'Status')}</span>
-                <span>{t('game.store', 'Store')}</span>
-                <span>{t('wine.actions', 'Action')}</span>
-            </Box>
-            <AnimatePresence>
-                {library.map((item, index) => (
-                    <GameItem
-                        key={item.appName}
-                        game={item}
-                        index={index}
-                        {...props}
-                        listLength={library.length}
-                    />
-                ))}
-            </AnimatePresence>
+            {/*<AnimatePresence>*/}
+            {library.map((item, index) => (
+                <GameItem
+                    key={item.appName}
+                    game={item}
+                    index={index}
+                    {...props}
+                    listLength={library.length}
+                />
+            ))}
+            {/*</AnimatePresence>*/}
         </Grid>
     )
 }
@@ -72,24 +63,23 @@ const GameItem = observer(
         const { libraryController, mainPage } = useGlobalStore()
         const wrapperRef = useRef<HTMLDivElement>(null)
 
-        const cardVisible = useComputedValue(() => {
-            // to track list height
-            libraryController.listDimensions.height
-            const scrollPosition = libraryController.listScrollPosition
-            if (!scrollPosition) {
-                return false
-            }
-            const bodyHeight = document.body?.clientHeight || 0
-            const { offsetTop = 0 } = wrapperRef.current || {}
-            const diff = offsetTop - scrollPosition.top
-            const percOfScreen = getPercValue(bodyHeight, 50)
-            return diff > -percOfScreen && diff < bodyHeight + percOfScreen
-        })
+        // const cardVisible = useComputedValue(() => {
+        //     // to track list height
+        //     libraryController.listDimensions.height
+        //     const scrollPosition = libraryController.listScrollPosition
+        //     if (!scrollPosition) {
+        //         return false
+        //     }
+        //     const bodyHeight = document.body?.clientHeight || 0
+        //     const { offsetTop = 0 } = wrapperRef.current || {}
+        //     const diff = offsetTop - scrollPosition.top
+        //     const percOfScreen = getPercValue(bodyHeight, 50)
+        //     return diff > -percOfScreen && diff < bodyHeight + percOfScreen
+        // })
 
         const {
             app_name,
             is_installed,
-            runner,
             install: { is_dlc }
         } = game.data
 
@@ -112,29 +102,29 @@ const GameItem = observer(
                 }}
                 ref={wrapperRef}
             >
-                <motion.div
-                    r-if={cardVisible}
-                    layoutId={layoutId}
-                    animate={{
-                        scale: 1,
-                        opacity: 1,
-                        transition: {
-                            delay: 0.03
-                        }
-                    }}
-                    initial={{
-                        scale: layout === 'grid' ? 0.7 : 1,
-                        opacity: 0
-                    }}
-                    exit={{
-                        opacity: 0,
-                        transition: {
-                            delay: 0.03
-                        }
-                    }}
-                    transition={{
-                        type: 'tween'
-                    }}
+                <div
+                // r-if={cardVisible}
+                // layoutId={layoutId}
+                // animate={{
+                //     scale: 1,
+                //     opacity: 1,
+                //     transition: {
+                //         delay: 0.03
+                //     }
+                // }}
+                // initial={{
+                //     scale: layout === 'grid' ? 0.7 : 1,
+                //     opacity: 0
+                // }}
+                // exit={{
+                //     opacity: 0,
+                //     transition: {
+                //         delay: 0.03
+                //     }
+                // }}
+                // transition={{
+                //     type: 'tween'
+                // }}
                 >
                     <GameCard
                         key={app_name}
@@ -152,7 +142,7 @@ const GameItem = observer(
                         game={game}
                         layout={layout}
                     />
-                </motion.div>
+                </div>
             </div>
         )
     }

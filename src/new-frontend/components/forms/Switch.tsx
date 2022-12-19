@@ -10,6 +10,7 @@ const Switch: React.FC<{
         <SwitchChakra
             size="md"
             checked={value}
+            colorScheme={'accent'}
             defaultChecked={value}
             onChange={(ev) => onChange?.(ev.target.checked)}
         >

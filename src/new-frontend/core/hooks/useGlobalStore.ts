@@ -1,4 +1,4 @@
-import { GlobalStore } from '../core/state/global/GlobalStore'
+import { GlobalStore } from '../state/global/GlobalStore'
 
 const globalStore = new GlobalStore()
 

@@ -1,6 +1,6 @@
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import useGlobalStore from '../../hooks/useGlobalStore'
+import useGlobalStore from '../../core/hooks/useGlobalStore'
 import { runInAction } from 'mobx'
 import {
     Box,
@@ -11,17 +11,18 @@ import {
     PopoverTrigger,
     Text
 } from '@chakra-ui/react'
-import chroma from 'chroma-js'
 import logo from '../../../frontend/assets/heroic-icon.svg'
 import {
     Check,
     Download,
-    Games,
     Palette,
     Settings,
-    ShoppingCart
+    SportsEsports,
+    SupervisedUserCircle
 } from '@mui/icons-material'
 import { observer } from 'mobx-react'
+import { useLocation } from 'react-router-dom'
+import { useNavigate } from 'react-router'
 
 const Header = () => {
     const { t } = useTranslation()
@@ -41,31 +42,72 @@ const Header = () => {
         }
     }, [containerRef])
 
+    const menu = [
+        {
+            label: t('Library', 'Library'),
+            icon: <SportsEsports />,
+            to: '/library'
+        },
+        {
+            label: 'Downloads',
+            icon: <Download />,
+            to: '/downloads'
+        },
+        {
+            label: 'Contas',
+            icon: <SupervisedUserCircle />,
+            to: '/stores'
+        },
+        {
+            label: t('Settings', 'Settings'),
+            icon: <Settings />,
+            to: '/settings'
+        }
+    ]
+
+    const navigate = useNavigate()
+    const location = useLocation()
+    const clickSound = useMemo(() => new Audio('/audio/click.mp3'), [])
+
     return (
         <Flex
             ref={containerRef}
-            position={'absolute'}
-            top={0}
-            right={0}
-            left={0}
             flexDirection={'row'}
-            alignItems={'center'}
-            p={5}
+            px={3}
+            pt={3}
             zIndex={1000}
-            bg={chroma(layoutPreferences.primaryColor.val!).alpha(0.4).css()}
-            boxShadow={'0 4px 30px rgba(0, 0, 0, 0.1)'}
+            // height={'100vh'}
+            bg={'primary'}
+            boxShadow={'0 4px 30px rgba(0, 0, 0, 0.2)'}
             backdropFilter={'blur(30px)'}
+            position={'absolute'}
+            left={0}
+            right={0}
         >
-            <img src={logo as never} style={{ height: 40 }} />
+            <Flex
+                flexDirection={'row'}
+                alignItems={'center'}
+                justifyContent={'center'}
+                gap={5}
+            >
+                <img src={logo as never} style={{ height: 40 }} />
+                {/*<Text fontWeight={'bold'}>Heroic Game Launcher</Text>*/}
+            </Flex>
             <Flex flex={1}></Flex>
-            <MenuItem
-                label={t('Library', 'Library')}
-                selected
-                icon={<Games />}
-            />
-            <MenuItem label={'Downloads'} icon={<Download />} />
-            <MenuItem label={'Stores'} icon={<ShoppingCart />} />
-            <MenuItem icon={<Settings />} label={t('Settings', 'Settings')} />
+            {menu.map((item) => {
+                return (
+                    <MenuItem
+                        {...item}
+                        selected={location?.pathname.startsWith(item.to)}
+                        key={item.label}
+                        onClick={() => {
+                            clickSound.play()
+                            navigate(item.to)
+                        }}
+                    />
+                )
+            })}
+
             <Flex flex={1}></Flex>
             <Flex gap={5}>
                 <Popover>
@@ -88,14 +130,14 @@ const Header = () => {
                                         color={color}
                                         key={color}
                                         selected={
-                                            layoutPreferences.primaryColor
-                                                .val === color
+                                            layoutPreferences.themeColors
+                                                .primary === color
                                         }
-                                        onClick={() =>
-                                            layoutPreferences.primaryColor.set(
-                                                color
-                                            )
-                                        }
+                                        // onClick={() =>
+                                        //     layoutPreferences.themeColors.primary.set(
+                                        //         color
+                                        //     )
+                                        // }
                                     />
                                 )
                             })}
@@ -119,7 +161,7 @@ const colors = [
 const ColorBox: React.FC<{
     color: string
     selected?: boolean
-    onClick: () => void
+    onClick?: () => void
 }> = ({ color, selected, onClick }) => {
     return (
         <Flex
@@ -140,25 +182,28 @@ const MenuItem = ({
     label,
     selected,
     icon,
-    outlined
+    onClick
 }: {
     label: string
     selected?: boolean
     icon?: JSX.Element
     outlined?: boolean
+    onClick: () => void
 }) => {
     return (
         <Flex
             py={3}
-            px={5}
-            bg={selected ? '#1f1d2b' : 'transparent'}
             userSelect={'none'}
-            borderRadius={10}
             cursor={'pointer'}
             gap={3}
-            border={outlined && !selected ? `1px solid white` : undefined}
+            color={selected ? 'accent' : 'disabled'}
+            fontWeight={selected ? 'bold' : 'normal'}
+            px={6}
             alignItems={'center'}
             flexDirection={'row'}
+            borderBottomColor={selected ? 'accent' : 'transparent'}
+            borderBottomWidth={2}
+            onClick={onClick}
         >
             {icon}
             <Text>{label}</Text>

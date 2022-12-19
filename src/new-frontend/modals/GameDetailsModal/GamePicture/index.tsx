@@ -5,7 +5,7 @@ import fallbackImage from 'new-frontend/assets/heroic_card.jpg'
 
 type Props = {
     art_square: string
-    imgStyle: object
+    imgStyle?: object
     store: string
 }
 

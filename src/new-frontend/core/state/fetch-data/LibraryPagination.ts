@@ -1,5 +1,5 @@
 import { GameInfo } from '../../../../common/types'
-import { Box } from '../common/utils'
+import { StateBox } from '../common/utils'
 import { autorun, makeAutoObservable, runInAction } from 'mobx'
 import { SortGame } from '../common/common'
 import { GlobalStore } from '../global/GlobalStore'
@@ -65,15 +65,15 @@ const filterByPlatform = ({
 
 export type LibraryPaginationOptions = {
     globalStore: GlobalStore
-    termBox?: Box<string>
-    sortBox?: Box<SortGame>
-    platformBox?: Box<string>
-    categoryBox?: Box<Category>
-    showHiddenBox?: Box<boolean>
+    termBox?: StateBox<string>
+    sortBox?: StateBox<SortGame>
+    platformBox?: StateBox<string>
+    categoryBox?: StateBox<Category>
+    showHiddenBox?: StateBox<boolean>
     onlyFavourites?: boolean
     onlyRecent?: boolean
     enabled: typeof enabled
-    modeBox: Box<'recents' | 'favorites' | 'all'>
+    modeBox: StateBox<'recents' | 'favorites' | 'all'>
     rpp: number
 }
 
@@ -143,6 +143,9 @@ export default class LibraryPagination {
                 return false
             }
             if (!this.enabled.notInstalled && !i.isInstalled) {
+                return false
+            }
+            if (!this.enabled.runners[i.data.runner]) {
                 return false
             }
             if (!this.options.showHiddenBox?.get() && i.isHidden) {

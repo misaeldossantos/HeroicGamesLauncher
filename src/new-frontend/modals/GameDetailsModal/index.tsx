@@ -1,10 +1,10 @@
 import React, { useEffect, useMemo } from 'react'
 import { observer } from 'mobx-react'
-import useGlobalStore from '../../hooks/useGlobalStore'
-import { Flex, Grid, Spinner, Text } from '@chakra-ui/react'
+import useGlobalStore from '../../core/hooks/useGlobalStore'
+import { Flex, Grid, Text } from '@chakra-ui/react'
 import GamePicture from './GamePicture'
 import Modal from '../../components/ui/Modal'
-import { Box } from '../../core/state/common/utils'
+import { StateBox } from '../../core/state/common/utils'
 import Info from './Info'
 import Log from './Log'
 import Settings from './Settings'
@@ -15,16 +15,20 @@ import {
     StarOutline,
     StopCircle
 } from '@mui/icons-material'
-import MotionBox from '../../components/ui/MotionBox'
 import { Game } from '../../core/state/model/Game'
 import { useTranslation } from 'react-i18next'
 import MenuActions from './MenuActions'
+import ActionButton from '../../components/ui/ActionButton'
+import MotionBox from '../../components/ui/MotionBox'
 
 const GameDetailsModal = () => {
     const { mainPage } = useGlobalStore()
     const { gameModal } = mainPage
     const { props: { game } = {} } = gameModal
-    const tab = useMemo(() => new Box<'info' | 'log' | 'settings'>('info'), [])
+    const tab = useMemo(
+        () => new StateBox<'info' | 'log' | 'settings'>('info'),
+        []
+    )
 
     useEffect(() => {
         tab.set('info')
@@ -34,9 +38,10 @@ const GameDetailsModal = () => {
         <Modal
             modal={gameModal}
             title={game?.data.title || ''}
+            fullScreen
             menu={<MenuActions game={game!} r-if={game} />}
         >
-            <Grid gridTemplateColumns={'600px 1fr'} r-if={game} height={'100%'}>
+            <Grid gridTemplateColumns={'600px 1fr'} r-if={game}>
                 <Flex pointerEvents={'none'}>
                     <Flex position={'absolute'} top={0} bottom={0}>
                         <GamePicture
@@ -50,9 +55,9 @@ const GameDetailsModal = () => {
                         />
                     </Flex>
                 </Flex>
-                <Flex flex={1} r-if={game} flexDirection={'column'}>
+                <Flex height={'100%'} r-if={game} flexDirection={'column'}>
                     <Grid
-                        gridTemplateRows={'auto 0.92fr auto'}
+                        gridTemplateRows={'min-content 1fr min-content'}
                         overflow={'hidden'}
                         height={'100%'}
                     >
@@ -80,7 +85,12 @@ const GameDetailsModal = () => {
                             />
                         </Flex>
 
-                        <Flex
+                        <MotionBox
+                            display={'flex'}
+                            key={tab.val}
+                            layoutId={tab.val}
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
                             py={30}
                             px={10}
                             overflowY={'auto'}
@@ -96,7 +106,7 @@ const GameDetailsModal = () => {
                                 r-else-if={tab.is('settings')}
                                 game={game!}
                             />
-                        </Flex>
+                        </MotionBox>
 
                         <Actions game={game!} />
                     </Grid>
@@ -107,7 +117,10 @@ const GameDetailsModal = () => {
 }
 
 const Actions: React.FC<{ game: Game }> = observer(({ game }) => {
-    const { gameDownloadQueue } = useGlobalStore()
+    const {
+        gameDownloadQueue,
+        mainPage: { gameModal }
+    } = useGlobalStore()
     const { t } = useTranslation('gamepage', {})
     return (
         <Flex
@@ -154,56 +167,15 @@ const Actions: React.FC<{ game: Game }> = observer(({ game }) => {
                     label={t('button.install')}
                     icon={<DownloadOutlined />}
                     color={'primary'}
-                    onClick={async () => gameDownloadQueue!.addGame(game!)}
+                    onClick={async () => {
+                        gameModal.close()
+                        gameDownloadQueue!.addGame(game!)
+                    }}
                 />
             </React.Fragment>
         </Flex>
     )
 })
-
-const ActionButton: React.FC<{
-    onClick: () => void
-    color: string
-    label: string
-    loading?: boolean
-    icon?: JSX.Element
-    textColor?: string
-}> = ({ onClick, color, textColor, icon, label, loading }) => {
-    return (
-        <MotionBox
-            whileTap={{
-                y: 4
-            }}
-            onClick={onClick}
-        >
-            <Flex
-                bg={color}
-                color={textColor}
-                p={3}
-                borderRadius={6}
-                gap={2}
-                alignItems={'center'}
-                cursor={'pointer'}
-                as={'button'}
-                height={50}
-                width={250}
-                justifyContent={'center'}
-            >
-                <Spinner r-if={loading} />
-                <React.Fragment r-else>
-                    {icon}
-                    <Text
-                        fontSize={16}
-                        fontWeight={'bold'}
-                        textTransform={'uppercase'}
-                    >
-                        {label}
-                    </Text>
-                </React.Fragment>
-            </Flex>
-        </MotionBox>
-    )
-}
 
 const Tab: React.FC<{
     label: string

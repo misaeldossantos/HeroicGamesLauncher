@@ -1,20 +1,30 @@
-import { Box } from '../common/utils'
 import chroma from 'chroma-js'
 import { makeAutoObservable } from 'mobx'
 
-export default class LayoutPreferences {
-    // TODO: move GlobalState logic to here
-    themeName = 'heroic'
-    zoomPercent = 100
-    primaryColor = Box.create('rgb(36,88,255)')
-    primaryFontFamily = ''
-    secondaryFontFamily = ''
+class ThemeColors {
+    primary = '#17313a'
+    accent = '#1ed862'
 
     constructor() {
         makeAutoObservable(this)
     }
 
-    get accentColor() {
-        return chroma(this.primaryColor.val!).brighten(1).css()
+    get disabled() {
+        return chroma('white').darken(1).css()
+    }
+
+    get secondary() {
+        return chroma(this.primary!).desaturate(8).css()
+    }
+}
+
+export default class LayoutPreferences {
+    // TODO: move GlobalState logic to here
+    themeName = 'heroic'
+    zoomPercent = 100
+    themeColors = new ThemeColors()
+
+    constructor() {
+        makeAutoObservable(this)
     }
 }

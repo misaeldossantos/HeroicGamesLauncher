@@ -9,7 +9,7 @@ import {
 
 import { TFunction } from 'react-i18next'
 import { getGameInfo, sendKill, syncSaves } from './index'
-import { DialogModalOptions } from '../types'
+import { DialogModalOptions } from '../../types'
 
 const storage: Storage = window.localStorage
 

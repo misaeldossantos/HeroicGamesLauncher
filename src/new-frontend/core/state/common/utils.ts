@@ -1,6 +1,6 @@
 import { makeAutoObservable, reaction } from 'mobx'
 
-export class Box<T> {
+export class StateBox<T> {
     constructor(private _val?: T) {
         makeAutoObservable(this)
     }
@@ -17,21 +17,21 @@ export class Box<T> {
         return !!vals.find((val) => this._val === val)
     }
 
-    // switch<O>(when: { [key: string]: O } & { default: O }) {
-    //   for (const val in when) {
-    //     if (this.val === val) {
-    //       return when[val]
-    //     }
-    //   }
-    //   return when.default
-    // }
+    switch<O>(when: { [key: string]: O } & { default?: O }) {
+        for (const val in when) {
+            if (this.val === val) {
+                return when[val]
+            }
+        }
+        return when.default
+    }
 
     setIf(is: T, val: T, otherwise?: T) {
         this.set(this.is(is) ? val : otherwise || this._val)
     }
 
     static create<T>(val: T) {
-        return new Box(val)
+        return new StateBox(val)
     }
 
     get val() {
@@ -45,6 +45,7 @@ export class Box<T> {
 
 export class MobxState {
     disposers = new Set<() => void>()
+
     destroy() {
         for (const dispose of this.disposers) {
             dispose()
@@ -56,9 +57,11 @@ export class MobxState {
     }
 }
 
-export class Disclosure<Props> {
+export class Disclosure<Props, ReturnData = void> {
     opened = false
     props?: Props
+
+    private callback?: (data: ReturnData) => void
 
     constructor() {
         makeAutoObservable(this)
@@ -72,5 +75,20 @@ export class Disclosure<Props> {
     close() {
         this.opened = false
         this.props = undefined
+    }
+
+    async requestData(props: Props): Promise<ReturnData> {
+        return new Promise((resolve) => {
+            this.callback = resolve
+            this.open(props)
+        })
+    }
+
+    onReturn(data: ReturnData) {
+        this.close()
+        if (this.callback) {
+            this.callback(data)
+            this.callback = undefined
+        }
     }
 }

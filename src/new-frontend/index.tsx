@@ -14,10 +14,17 @@ import { I18nextProvider, initReactI18next } from 'react-i18next'
 import HttpApi from 'i18next-http-backend'
 import { HashRouter, Navigate, Route, Routes } from 'react-router-dom'
 import Library from 'new-frontend/pages/Library'
-import GameDetailsModal from './modals/GameDetailsModal'
 import { observer } from 'mobx-react'
-import useGlobalStore from './hooks/useGlobalStore'
-import useComputedValue from './hooks/useComputedValue'
+import useGlobalStore from './core/hooks/useGlobalStore'
+import useComputedValue from './core/hooks/useComputedValue'
+import Modals from './modals'
+import Stores from './pages/Stores'
+import Settings from './pages/Settings'
+import Interface from './pages/Settings/Interface'
+import { initGamepad } from '../frontend/helpers/gamepad'
+import { initShortcuts } from '../frontend/helpers/shortcuts'
+import Downloads from './pages/Downloads'
+import chroma from 'chroma-js'
 
 const container = document.getElementById('root')
 const root = createRoot(container!) // createRoot(container!) if you use TypeScript
@@ -95,18 +102,31 @@ i18next
         ]
     })
 
+initGamepad()
+initShortcuts()
+
 const App = observer(() => {
     const globalStore = useGlobalStore()
 
-    const theme = useComputedValue(() =>
-        extendTheme({
+    const theme = useComputedValue(() => {
+        const { primary, secondary, accent, disabled } =
+            globalStore.layoutPreferences.themeColors
+        return extendTheme({
             colors: {
                 surface: '#2b2b2a',
-                primary: globalStore.layoutPreferences.primaryColor.val,
-                accent: globalStore.layoutPreferences.accentColor
+                'accent.100': chroma(accent).brighten(3).css(),
+                'accent.300': accent,
+                'accent.500': accent,
+                'accent.200': chroma(accent).brighten(2).css(),
+                primary,
+                'primary.500': primary,
+                'primary.300': primary,
+                secondary,
+                accent,
+                disabled
             }
         })
-    )
+    })
 
     return (
         <React.Suspense fallback={<></>}>
@@ -135,9 +155,26 @@ const App = observer(() => {
                                                 path={'/library'}
                                                 element={<Library />}
                                             />
+                                            <Route
+                                                path={'/stores'}
+                                                element={<Stores />}
+                                            />
+                                            <Route
+                                                path={'/downloads'}
+                                                element={<Downloads />}
+                                            />
+                                            <Route
+                                                path={'/settings'}
+                                                element={<Settings />}
+                                            >
+                                                <Route
+                                                    path={'interface'}
+                                                    element={<Interface />}
+                                                />
+                                            </Route>
                                         </Route>
                                     </Routes>
-                                    <GameDetailsModal />
+                                    <Modals />
                                 </main>
                             </HashRouter>
                         </DarkMode>

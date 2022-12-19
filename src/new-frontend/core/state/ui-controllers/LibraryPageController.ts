@@ -1,5 +1,5 @@
 import { autorun, makeAutoObservable, observable, toJS } from 'mobx'
-import { Box } from '../common/utils'
+import { StateBox } from '../common/utils'
 import { Category } from 'new-frontend/types'
 import LibraryListControler from './LibraryListController'
 import LibraryPagination, {
@@ -13,21 +13,22 @@ import { SortGame } from '../common/common'
 const STORAGE_KEY = 'data.library-page'
 
 export default class LibraryPageController {
-    readonly search = Box.create('')
+    readonly search = StateBox.create('')
 
-    readonly category = Box.create<Category>('all')
-    readonly platform = Box.create('all')
+    readonly category = StateBox.create<Category>('all')
+    readonly platform = StateBox.create('all')
+    headerHeight = 0
 
-    mode = Box.create<'recents' | 'favorites' | 'all'>('recents')
+    mode = StateBox.create<'recents' | 'favorites' | 'all'>('recents')
 
     enabled = observable({
         favorites: false,
         recents: false,
         runners: {
-            legendary: false,
+            legendary: true,
             gog: false
         },
-        notInstalled: false,
+        notInstalled: true,
         platforms: {
             windows: false,
             linux: false
@@ -39,9 +40,9 @@ export default class LibraryPageController {
     previousListScrollPosition = { ...this.listScrollPosition }
     readonly pagination: LibraryPagination
 
-    readonly sort = Box.create<SortGame>('installed')
-    readonly layout = Box.create<'grid' | 'list'>('grid')
-    readonly showHidden = Box.create(false)
+    readonly sort = StateBox.create<SortGame>('installed')
+    readonly layout = StateBox.create<'grid' | 'list'>('grid')
+    readonly showHidden = StateBox.create(false)
 
     constructor(private globalStore: GlobalStore) {
         this.pagination = new LibraryPagination({

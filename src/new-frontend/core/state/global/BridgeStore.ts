@@ -1,6 +1,6 @@
 import { GameStatus, InstallProgress, RecentGame } from 'common/types'
 import { makeAutoObservable } from 'mobx'
-import { configStore } from '../../../helpers/electronStores'
+import { configStore } from '../../helpers/electronStores'
 
 // bridge: reactive updates from electron/local storage
 export class BridgeStore {
@@ -37,8 +37,6 @@ export class BridgeStore {
             }
             return currentProgress.percent
         }
-
-        console.log('Game status changed', gameStatus)
 
         this.gameStatusByAppName[appName] = {
             status: status,

@@ -12,7 +12,6 @@ const FormField: React.FC<{
         value: get(parent, path),
         onChange: useCallback((val: never) => {
             runInAction(() => {
-                console.log(val)
                 set(parent, path, val)
             })
         }, [])

@@ -14,7 +14,7 @@ import fileSize from 'filesize'
 import {
     gogInstalledGamesStore,
     gogLibraryStore
-} from '../../frontend/helpers/electronStores'
+} from '../../../frontend/helpers/electronStores'
 const readFile = window.api.readConfig
 
 const writeConfig = window.api.writeConfig

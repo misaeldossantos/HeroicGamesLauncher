@@ -2,7 +2,7 @@ import React, { MouseEvent } from 'react'
 import { AntiCheatInfo } from 'common/types'
 import './index.css'
 import { useTranslation } from 'react-i18next'
-import { createNewWindow } from '../../../helpers'
+import { createNewWindow } from '../../../core/helpers'
 
 type Props = {
     anticheatInfo: AntiCheatInfo

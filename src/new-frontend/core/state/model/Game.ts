@@ -1,19 +1,18 @@
 import { AntiCheatInfo, AppSettings, GameInfo } from 'common/types'
-import { autorun, makeAutoObservable, reaction, runInAction, toJS } from 'mobx'
+import { makeAutoObservable, runInAction } from 'mobx'
 import {
     getInstallInfo,
     launch,
     sendKill,
     size,
     syncSaves
-} from 'new-frontend/helpers'
+} from 'new-frontend/core/helpers'
 // import { GameDownloadQueue } from './GameDownloadQueue'
 import { t } from 'i18next'
 import { LegendaryInstallInfo } from '../../../../common/types/legendary'
 import { GogInstallInfo } from '../../../../common/types/gog'
 import { HowLongToBeatEntry } from 'howlongtobeat'
 import { bridgeStore } from '../global'
-import { writeConfig } from '../../../../frontend/helpers'
 
 class Log {
     content!: string
@@ -25,17 +24,16 @@ class Log {
 
     async load() {
         this.loading = true
-        const content = await window.api.getLogContent({
+        this.content = await window.api.getLogContent({
             appName: this.game.appName,
             defaultLast: true
         })
-        this.content = content
         this.loading = false
     }
 }
 
 export class Game {
-    private installInfo!: LegendaryInstallInfo | GogInstallInfo
+    installInfo?: LegendaryInstallInfo | GogInstallInfo | null = null
     readonly log = new Log(this)
     howLongToBeatInfo?: HowLongToBeatEntry | null
     anticheatInfo?: AntiCheatInfo | null
@@ -80,48 +78,65 @@ export class Game {
             this.settings = settings
             this.settingsLoaded = true
         })
-
-        const installPlatform =
-            data.install.platform || data.is_linux_native
-                ? 'linux'
-                : data.is_mac_native
-                ? 'Mac'
-                : 'Windows'
-
-        getInstallInfo(this.appName, data.runner, installPlatform).then(
-            (info) => {
-                if (!info) {
-                    throw 'Cannot get game info'
-                }
-                runInAction(() => {
-                    this.installInfo = info as never
-                })
-            }
-        )
-        // .catch((error) => {
-        //     console.error(error)
-        //     window.api.logError(`${`${error}`}`)
-        //     setHasError({ error: true, message: `${error}` })
-        // })
-
         // TODO: clear subscription on instance destroy to avoid memory leak
-        reaction(
-            () => toJS(this.settings),
-            (config) => {
-                if (this.settingsLoaded) {
-                    // auto saves settings on change
-                    writeConfig({ appName: data.app_name, config })
-                }
-            }
-        )
+        // reaction(
+        //     () => toJS(this.settings),
+        //     (config) => {
+        //         if (this.settingsLoaded) {
+        //             // auto saves settings on change
+        //             writeConfig({ appName: data.app_name, config })
+        //         }
+        //     }
+        // )
     }
 
     isHidden = false
     isFavourite = false
     isAvailable = true
 
+    loadInstallInfo() {
+        if (this.installInfo) {
+            return
+        }
+
+        const installPlatform =
+            this.data.install.platform || this.data.is_linux_native
+                ? 'linux'
+                : this.data.is_mac_native
+                ? 'Mac'
+                : 'Windows'
+
+        getInstallInfo(this.appName, this.data.runner, installPlatform)
+            .then((info) => {
+                if (!info) {
+                    throw 'Cannot get game info'
+                }
+                runInAction(() => {
+                    this.installInfo = info as never
+                })
+            })
+            .catch((error) => {
+                console.error(error)
+                window.api.logError(`${`${error}`}`)
+            })
+    }
+
     get status() {
         return bridgeStore.gameStatusByAppName[this.appName]?.status
+    }
+
+    get installDiskSizeFormatted() {
+        return (
+            this.installInfo?.manifest?.disk_size &&
+            size(Number(this.installInfo?.manifest?.disk_size))
+        )
+    }
+
+    get totalDownloadSizeFormatted() {
+        if (this.installInfo?.manifest?.download_size) {
+            return size(Number(this.installInfo?.manifest?.download_size))
+        }
+        return ''
     }
 
     uninstall() {

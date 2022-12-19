@@ -11,7 +11,6 @@ const GamesSection: React.FC<{
 
     return (
         <GamesList
-            isFirstLane
             library={pagination.allResults}
             layout={pageController.layout.get()}
             isRecent={isRecent}
